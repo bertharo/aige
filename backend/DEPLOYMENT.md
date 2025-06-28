@@ -1,110 +1,79 @@
-# AIGE Backend - Vercel Deployment Guide
+# AIGE Backend - Render Deployment Guide
 
-This guide will help you deploy the AIGE backend API to Vercel with proper configuration and settings.
+This guide will help you deploy the AIGE backend API to Render with proper configuration and settings.
 
 ## 🚀 Quick Deploy
 
-### Option 1: Deploy via Vercel Dashboard
+### Option 1: Deploy via Render Dashboard
 
-1. **Go to [Vercel Dashboard](https://vercel.com/dashboard)**
-2. **Click "New Project"**
-3. **Import your GitHub repository**: `bertharo/aige`
-4. **Configure the project**:
-   - **Framework Preset**: `Node.js`
+1. **Go to [Render Dashboard](https://dashboard.render.com/)**
+2. **Click "New +" and select "Web Service"**
+3. **Connect your GitHub repository**: `bertharo/aige`
+4. **Configure the service**:
+   - **Name**: `aige-backend`
    - **Root Directory**: `backend`
-   - **Build Command**: Leave empty (no build needed)
-   - **Output Directory**: Leave empty
-   - **Install Command**: `npm install`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Plan**: Free (or choose paid plan)
 
-### Option 2: Deploy via Vercel CLI
+### Option 2: Deploy via Render CLI
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
+# Install Render CLI
+npm install -g @render/cli
+
+# Login to Render
+render login
 
 # Navigate to backend directory
 cd backend
 
 # Deploy
-vercel
-
-# Follow the prompts:
-# - Link to existing project or create new
-# - Set project name: aige-backend
-# - Confirm settings
+render deploy
 ```
 
-## ⚙️ Vercel Configuration
+## ⚙️ Render Configuration
 
-The `vercel.json` file in the backend directory contains the optimal configuration:
+### Environment Variables
 
-```json
-{
-  "version": 2,
-  "name": "aige-backend",
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
-  ],
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  }
-}
-```
-
-## 🔧 Environment Variables
-
-### Required Environment Variables
-
-Set these in your Vercel project dashboard under **Settings > Environment Variables**:
+Set these in your Render service dashboard under **Environment**:
 
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `JWT_SECRET` | `your-super-secret-jwt-key` | Secret key for JWT token signing |
 | `FRONTEND_URL` | `https://your-frontend.vercel.app` | Your frontend URL for CORS |
 | `NODE_ENV` | `production` | Environment mode |
-
-### Optional Environment Variables
-
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `PORT` | `3000` | Server port (Vercel handles this) |
-| `CORS_ORIGIN` | `https://your-frontend.vercel.app` | Additional CORS origins |
+| `PORT` | `10000` | Port (Render sets this automatically) |
 
 ### How to Set Environment Variables
 
-1. **Go to Vercel Dashboard**
-2. **Select your project**
-3. **Go to Settings > Environment Variables**
+1. **Go to Render Dashboard**
+2. **Select your service**
+3. **Go to Environment tab**
 4. **Add the variables above**
 
 ## 🌐 Domain Configuration
 
-### Default Vercel Domain
+### Default Render Domain
 
-Your API will be available at: `https://your-project-name.vercel.app`
+Your API will be available at: `https://your-service-name.onrender.com`
+
+### Custom Domain (Optional)
+
+1. **Go to Render Dashboard > Your Service > Settings**
+2. **Click "Custom Domains"**
+3. **Add your custom domain**
+4. **Configure DNS records as instructed**
 
 ### API Endpoints
 
 After deployment, your endpoints will be:
 
-- **Health Check**: `https://your-project-name.vercel.app/health`
-- **Register**: `https://your-project-name.vercel.app/api/auth/register`
-- **Login**: `https://your-project-name.vercel.app/api/auth/login`
-- **Profile**: `https://your-project-name.vercel.app/api/user/profile`
+- **Health Check**: `https://your-service-name.onrender.com/health`
+- **Register**: `https://your-service-name.onrender.com/api/auth/register`
+- **Login**: `https://your-service-name.onrender.com/api/auth/login`
+- **Profile**: `https://your-service-name.onrender.com/api/user/profile`
 
 ## 🔒 Security Configuration
 
@@ -123,41 +92,40 @@ The backend is configured to allow requests from:
 
 ## 📱 Performance Optimization
 
-### Serverless Function Settings
+### Render Service Settings
 
-- **Max Duration**: 30 seconds
-- **Memory**: Auto-allocated by Vercel
-- **Cold Start**: Optimized for Node.js
+- **Auto-Deploy**: Enabled (pushes to main branch)
+- **Health Check Path**: `/health`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
 
-### Caching Strategy
+### Scaling Options
 
-For production, consider:
-- Database caching (Redis)
-- Response caching for static data
-- CDN for static assets
+- **Free Plan**: 750 hours/month, sleeps after 15 minutes of inactivity
+- **Paid Plans**: Always-on, custom scaling, better performance
 
 ## 🔄 Continuous Deployment
 
 ### Automatic Deployments
 
 - **Push to `main` branch**: Automatic deployment
-- **Pull Requests**: Preview deployments
-- **Branch deployments**: Automatic for all branches
+- **Pull Requests**: Manual deployment (optional)
+- **Branch deployments**: Configurable
 
 ### Deployment Settings
 
-Configure in Vercel Dashboard > Settings > Git:
+Configure in Render Dashboard > Your Service > Settings:
 
-- **Production Branch**: `main`
-- **Auto-deploy**: Enabled
-- **Preview deployments**: Enabled
+- **Auto-Deploy**: Enabled
+- **Branch**: `main`
+- **Health Check Path**: `/health`
 
 ## 🧪 Testing Your Deployment
 
 ### Health Check
 
 ```bash
-curl https://your-project-name.vercel.app/health
+curl https://your-service-name.onrender.com/health
 ```
 
 Expected response:
@@ -175,7 +143,7 @@ Expected response:
 
 #### Register User
 ```bash
-curl -X POST https://your-project-name.vercel.app/api/auth/register \
+curl -X POST https://your-service-name.onrender.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test User",
@@ -186,7 +154,7 @@ curl -X POST https://your-project-name.vercel.app/api/auth/register \
 
 #### Login User
 ```bash
-curl -X POST https://your-project-name.vercel.app/api/auth/login \
+curl -X POST https://your-service-name.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -200,8 +168,8 @@ curl -X POST https://your-project-name.vercel.app/api/auth/login \
 |-------|----------|
 | CORS errors | Check `FRONTEND_URL` environment variable |
 | JWT errors | Verify `JWT_SECRET` is set |
-| 404 errors | Check `vercel.json` routes configuration |
-| Timeout errors | Increase `maxDuration` in `vercel.json` |
+| 404 errors | Check health check path configuration |
+| Cold start delays | Upgrade to paid plan for always-on service |
 
 ## 🔗 Frontend Integration
 
@@ -209,7 +177,7 @@ curl -X POST https://your-project-name.vercel.app/api/auth/login \
 
 In your frontend Vercel project, set:
 ```
-VITE_API_URL = https://your-backend-project-name.vercel.app
+VITE_API_URL = https://your-service-name.onrender.com
 ```
 
 ### CORS Configuration
@@ -225,17 +193,17 @@ The backend automatically allows your frontend domain. If you need to add more d
 
 ## 📊 Monitoring & Logs
 
-### Vercel Logs
+### Render Logs
 
-- **Function Logs**: Available in Vercel Dashboard
-- **Real-time Logs**: Use Vercel CLI: `vercel logs`
+- **Build Logs**: Available in Render Dashboard
+- **Runtime Logs**: Real-time logs in dashboard
 - **Error Tracking**: Built-in error monitoring
 
 ### Performance Monitoring
 
-- **Function Duration**: Tracked automatically
-- **Memory Usage**: Monitored by Vercel
-- **Cold Start Times**: Optimized automatically
+- **Response Times**: Tracked automatically
+- **Memory Usage**: Monitored by Render
+- **Uptime**: Health check monitoring
 
 ## 🗄️ Database Considerations
 
@@ -290,8 +258,9 @@ Before going live:
 - [ ] Error handling verified
 - [ ] Logging configured
 - [ ] Database connected (if applicable)
-- [ ] SSL certificate active
+- [ ] SSL certificate active (automatic on Render)
 - [ ] Performance optimized
+- [ ] Health check working
 
 ## 🔄 Updates & Maintenance
 
@@ -299,24 +268,24 @@ Before going live:
 
 1. **Make changes to your code**
 2. **Push to GitHub**
-3. **Vercel automatically deploys**
+3. **Render automatically deploys**
 
 ### Environment Variable Updates
 
-1. **Go to Vercel Dashboard > Settings > Environment Variables**
+1. **Go to Render Dashboard > Your Service > Environment**
 2. **Update the variable**
-3. **Redeploy the project**
+3. **Redeploy the service**
 
-### Rollback
+### Manual Redeploy
 
-1. **Go to Vercel Dashboard > Deployments**
-2. **Find the deployment you want to rollback to**
-3. **Click "Redeploy"**
+1. **Go to Render Dashboard > Your Service**
+2. **Click "Manual Deploy"**
+3. **Select branch and deploy**
 
 ## 📞 Support
 
-- **Vercel Documentation**: [vercel.com/docs](https://vercel.com/docs)
-- **Vercel Support**: [vercel.com/support](https://vercel.com/support)
+- **Render Documentation**: [render.com/docs](https://render.com/docs)
+- **Render Support**: [render.com/support](https://render.com/support)
 - **Node.js Documentation**: [nodejs.org/docs](https://nodejs.org/docs)
 - **Express.js Documentation**: [expressjs.com](https://expressjs.com)
 
@@ -344,6 +313,23 @@ Before going live:
 - Use HTTPS everywhere
 - Regular security updates
 
+## 💰 Pricing Considerations
+
+### Free Plan Limitations
+
+- **750 hours/month** (about 31 days)
+- **Sleeps after 15 minutes** of inactivity
+- **Cold start delays** when waking up
+- **Limited bandwidth**
+
+### Paid Plan Benefits
+
+- **Always-on service**
+- **No cold start delays**
+- **Higher bandwidth limits**
+- **Better performance**
+- **Custom domains included**
+
 ---
 
-**Your AIGE backend is now ready for production deployment on Vercel! 🎉** 
+**Your AIGE backend is now ready for production deployment on Render! 🎉** 

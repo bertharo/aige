@@ -88,7 +88,7 @@ Set these in your Vercel project dashboard under **Settings > Environment Variab
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `VITE_API_URL` | `https://your-backend-url.vercel.app` | Your backend API URL |
+| `VITE_API_URL` | `https://your-backend-service.onrender.com` | Your Render backend API URL |
 
 ### How to Set Environment Variables
 
@@ -175,36 +175,42 @@ Configure in Vercel Dashboard > Settings > Git:
 |-------|----------|
 | API calls failing | Check `VITE_API_URL` environment variable |
 | 404 errors | Verify `vercel.json` routes configuration |
-| CORS errors | Ensure backend allows your Vercel domain |
+| CORS errors | Ensure Render backend allows your Vercel domain |
 | Styling issues | Check if CSS files are loading correctly |
 
-## 🔗 Backend Integration
+## 🔗 Backend Integration (Render)
 
 ### CORS Configuration
 
-Update your backend CORS settings to allow your Vercel domain:
+Your Render backend is configured to allow requests from your Vercel frontend. Make sure your Render backend has the correct environment variable:
 
-```javascript
-// In your backend server.js
-app.use(cors({
-  origin: [
-    'https://your-frontend.vercel.app',
-    'http://localhost:3000' // for local development
-  ],
-  credentials: true
-}));
+```
+FRONTEND_URL = https://your-frontend.vercel.app
 ```
 
-### Environment Variables for Backend
+### Environment Variables for Render Backend
 
-If deploying backend to Vercel as well:
+In your Render service dashboard, set these environment variables:
 
 ```bash
-# Backend environment variables
-NODE_ENV=production
-JWT_SECRET=your-secret-key
-CORS_ORIGIN=https://your-frontend.vercel.app
+# Required
+JWT_SECRET = your-super-secret-jwt-key
+FRONTEND_URL = https://your-frontend.vercel.app
+NODE_ENV = production
+
+# Optional
+PORT = 10000 (Render sets this automatically)
 ```
+
+### Testing the Connection
+
+1. **Deploy your backend to Render first**
+2. **Get your Render service URL**: `https://your-service-name.onrender.com`
+3. **Set frontend environment variable**: `VITE_API_URL = https://your-service-name.onrender.com`
+4. **Test the API connection**:
+   ```bash
+   curl https://your-service-name.onrender.com/health
+   ```
 
 ## 📊 Analytics & Monitoring
 
@@ -231,8 +237,8 @@ CORS_ORIGIN=https://your-frontend.vercel.app
 Before going live:
 
 - [ ] Environment variables configured
-- [ ] Backend API deployed and accessible
-- [ ] CORS settings updated
+- [ ] Render backend deployed and accessible
+- [ ] CORS settings updated on Render backend
 - [ ] Custom domain configured (if needed)
 - [ ] SSL certificate active
 - [ ] Performance optimized
@@ -257,8 +263,9 @@ Before going live:
 
 - **Vercel Documentation**: [vercel.com/docs](https://vercel.com/docs)
 - **Vercel Support**: [vercel.com/support](https://vercel.com/support)
+- **Render Documentation**: [render.com/docs](https://render.com/docs)
 - **Community**: [github.com/vercel/vercel/discussions](https://github.com/vercel/vercel/discussions)
 
 ---
 
-**Your AIGE frontend is now ready for production deployment on Vercel! 🎉** 
+**Your AIGE frontend is now ready for production deployment on Vercel with Render backend! 🎉** 

@@ -242,15 +242,12 @@ app.use('*', (req, res) => {
   });
 });
 
-// For Vercel serverless deployment
-if (process.env.NODE_ENV !== 'production') {
-  // Start server only in development
-  app.listen(PORT, () => {
-    console.log(`🚀 AIGE Backend server running on port ${PORT}`);
-    console.log(`📡 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth/`);
-  });
-}
+// Start server (for Render deployment)
+app.listen(PORT, () => {
+  console.log(`🚀 AIGE Backend server running on port ${PORT}`);
+  console.log(`📡 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth/`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
 
-// Export for Vercel
 module.exports = app; 
