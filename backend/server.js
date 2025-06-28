@@ -12,7 +12,16 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL || 'https://aige-frontend.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.static('public'));
@@ -34,7 +43,12 @@ const validateLogin = [
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'AIGE API is running' });
+  res.json({ 
+    message: 'AIGE API is running',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Health check endpoint
@@ -42,7 +56,9 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    service: 'AIGE Backend API'
+    service: 'AIGE Backend API',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime()
   });
 });
 
@@ -226,11 +242,15 @@ app.use('*', (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 AIGE Backend server running on port ${PORT}`);
-  console.log(`📡 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth/`);
-});
+// For Vercel serverless deployment
+if (process.env.NODE_ENV !== 'production') {
+  // Start server only in development
+  app.listen(PORT, () => {
+    console.log(`🚀 AIGE Backend server running on port ${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth/`);
+  });
+}
 
+// Export for Vercel
 module.exports = app; 
