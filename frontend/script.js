@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // API Configuration
+    const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:3000';
+    const API_ENDPOINTS = {
+        register: `${API_BASE_URL}/api/auth/register`,
+        login: `${API_BASE_URL}/api/auth/login`,
+        profile: `${API_BASE_URL}/api/user/profile`,
+        health: `${API_BASE_URL}/health`
+    };
+
     // DOM Elements
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -56,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Login form handling
-    function handleLogin() {
+    async function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         const rememberMe = document.getElementById('rememberMe').checked;
@@ -76,20 +85,46 @@ document.addEventListener('DOMContentLoaded', function() {
         const submitBtn = loginForm.querySelector('.btn-primary');
         submitBtn.classList.add('loading');
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            const response = await fetch(API_ENDPOINTS.login, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store token if remember me is checked
+                if (rememberMe) {
+                    localStorage.setItem('aige_token', data.token);
+                    localStorage.setItem('aige_user', JSON.stringify(data.user));
+                } else {
+                    sessionStorage.setItem('aige_token', data.token);
+                    sessionStorage.setItem('aige_user', JSON.stringify(data.user));
+                }
+
+                showSuccessMessage(data.message || 'Login successful! Welcome back to AIGE.');
+                
+                // Redirect to dashboard or home page after successful login
+                setTimeout(() => {
+                    window.location.href = '/dashboard'; // Update this to your dashboard URL
+                }, 2000);
+            } else {
+                showError('loginPassword', data.message || 'Login failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showError('loginPassword', 'Network error. Please check your connection.');
+        } finally {
             submitBtn.classList.remove('loading');
-            
-            // For demo purposes, show success message
-            showSuccessMessage('Login successful! Welcome back to AIGE.');
-            
-            // In a real app, you would redirect or handle the response
-            console.log('Login attempt:', { email, password, rememberMe });
-        }, 2000);
+        }
     }
 
     // Signup form handling
-    function handleSignup() {
+    async function handleSignup() {
         const name = document.getElementById('signupName').value;
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
@@ -133,16 +168,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const submitBtn = signupForm.querySelector('.btn-primary');
         submitBtn.classList.add('loading');
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            const response = await fetch(API_ENDPOINTS.register, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store token
+                localStorage.setItem('aige_token', data.token);
+                localStorage.setItem('aige_user', JSON.stringify(data.user));
+
+                showSuccessMessage(data.message || 'Account created successfully! Welcome to AIGE.');
+                
+                // Redirect to dashboard or home page after successful registration
+                setTimeout(() => {
+                    window.location.href = '/dashboard'; // Update this to your dashboard URL
+                }, 2000);
+            } else {
+                if (data.errors && data.errors.length > 0) {
+                    data.errors.forEach(error => {
+                        showError(error.param, error.msg);
+                    });
+                } else {
+                    showError('signupEmail', data.message || 'Registration failed. Please try again.');
+                }
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            showError('signupEmail', 'Network error. Please check your connection.');
+        } finally {
             submitBtn.classList.remove('loading');
-            
-            // For demo purposes, show success message
-            showSuccessMessage('Account created successfully! Welcome to AIGE.');
-            
-            // In a real app, you would redirect or handle the response
-            console.log('Signup attempt:', { name, email, password, agreeTerms });
-        }, 2000);
+        }
     }
 
     // Email validation
@@ -154,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show error message
     function showError(fieldId, message) {
         const field = document.getElementById(fieldId);
+        if (!field) return;
+        
         const wrapper = field.closest('.input-wrapper');
         
         // Remove existing error message
@@ -234,7 +298,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             notification.style.transform = 'translateX(100%)';
             setTimeout(() => {
-                document.body.removeChild(notification);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
             }, 300);
         }, 3000);
     }
@@ -251,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
             this.style.pointerEvents = 'none';
             
-            // Simulate social auth
+            // Simulate social auth (replace with real OAuth implementation)
             setTimeout(() => {
                 this.innerHTML = originalContent;
                 this.style.pointerEvents = 'auto';
@@ -385,7 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
             this.appendChild(ripple);
             
             setTimeout(() => {
-                ripple.remove();
+                if (this.contains(ripple)) {
+                    ripple.remove();
+                }
             }, 600);
         });
     });
@@ -401,4 +469,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
+
+    // Check if user is already logged in
+    function checkAuthStatus() {
+        const token = localStorage.getItem('aige_token') || sessionStorage.getItem('aige_token');
+        if (token) {
+            // User is logged in, redirect to dashboard
+            window.location.href = '/dashboard'; // Update this to your dashboard URL
+        }
+    }
+
+    // Check auth status on page load
+    checkAuthStatus();
 }); 
