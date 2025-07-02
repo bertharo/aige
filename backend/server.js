@@ -5,10 +5,12 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const prisma = new PrismaClient();
 
 // Middleware
 app.use(helmet());
@@ -41,6 +43,22 @@ const validateLogin = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+// Middleware for role-based access
+function requireRole(roles) {
+  return (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, message: 'Access token required' });
+
+    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+      if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+      if (!roles.includes(user.role)) return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+      req.user = user;
+      next();
+    });
+  };
+}
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ 
@@ -53,8 +71,8 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'AIGE Backend API',
     environment: process.env.NODE_ENV || 'development',
@@ -62,23 +80,60 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Database health check endpoint
+app.get('/health/db', async (req, res) => {
+  try {
+    await prisma.$connect();
+    const userCount = await prisma.user.count();
+    res.json({
+      status: 'OK',
+      database: 'Connected',
+      userCount: userCount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      database: 'Connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Register endpoint
 app.post('/api/auth/register', validateRegistration, async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { name, email, password, role } = req.body;
+    const userRole = role && ['facility_staff', 'family', 'system_admin'].includes(role)
+      ? role
+      : 'family'; // Default to 'family' if not provided or invalid
+
+    console.log('Registration attempt for:', email);
+    console.log('Database URL (first 20 chars):', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) + '...' : 'NOT SET');
+
+    // Test database connection
+    try {
+      await prisma.$connect();
+      console.log('Database connection successful');
+    } catch (dbError) {
+      console.error('Database connection failed:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection failed'
       });
     }
 
-    const { name, email, password } = req.body;
-
     // Check if user already exists
-    const existingUser = users.find(user => user.email === email);
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
+      console.log('User already exists:', email);
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
@@ -89,20 +144,22 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user
-    const newUser = {
-      id: Date.now().toString(),
-      name,
-      email,
-      password: hashedPassword,
-      createdAt: new Date().toISOString()
-    };
+    console.log('Creating user in database...');
+    // Create user in Postgres via Prisma
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: userRole
+      }
+    });
 
-    users.push(newUser);
+    console.log('User created successfully:', newUser.id);
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
+      { userId: newUser.id, email: newUser.email, role: newUser.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -119,9 +176,14 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error: ' + error.message
     });
   }
 });
@@ -129,19 +191,15 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
 // Login endpoint
 app.post('/api/auth/login', validateLogin, async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
 
     const { email, password } = req.body;
 
-    // Find user
-    const user = users.find(user => user.email === email);
+    // Find user in Postgres via Prisma
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -160,7 +218,7 @@ app.post('/api/auth/login', validateLogin, async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -199,6 +257,164 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
     success: true,
     user: userWithoutPassword
   });
+});
+
+// Resident Management Endpoints
+// Create Resident (staff/admin)
+app.post('/api/residents', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const { name, photo, room, carePlan, medicalInfo } = req.body;
+    const resident = await prisma.resident.create({
+      data: {
+        name,
+        photo,
+        room,
+        carePlan,
+        medicalInfo,
+        admittedAt: new Date()
+      }
+    });
+    res.status(201).json({ success: true, resident });
+  } catch (error) {
+    console.error('Create resident error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get all Residents (staff/admin)
+app.get('/api/residents', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const residents = await prisma.resident.findMany();
+    res.json({ success: true, residents });
+  } catch (error) {
+    console.error('Get residents error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get Resident by ID (staff/admin)
+app.get('/api/residents/:id', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const resident = await prisma.resident.findUnique({ where: { id: req.params.id } });
+    if (!resident) return res.status(404).json({ success: false, message: 'Resident not found' });
+    res.json({ success: true, resident });
+  } catch (error) {
+    console.error('Get resident error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update Resident (staff/admin)
+app.put('/api/residents/:id', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const { name, photo, room, carePlan, medicalInfo, dischargedAt } = req.body;
+    const resident = await prisma.resident.update({
+      where: { id: req.params.id },
+      data: { name, photo, room, carePlan, medicalInfo, dischargedAt }
+    });
+    res.json({ success: true, resident });
+  } catch (error) {
+    console.error('Update resident error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Delete/Discharge Resident (admin only)
+app.delete('/api/residents/:id', requireRole(['system_admin']), async (req, res) => {
+  try {
+    await prisma.resident.delete({ where: { id: req.params.id } });
+    res.json({ success: true, message: 'Resident deleted' });
+  } catch (error) {
+    console.error('Delete resident error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Create Daily Report (staff/admin)
+app.post('/api/reports', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const { residentId, vitals, mood, meals, activities, notes, images } = req.body;
+    const report = await prisma.dailyReport.create({
+      data: {
+        residentId,
+        staffId: req.user.userId,
+        vitals,
+        mood,
+        meals,
+        activities,
+        notes,
+        images: images ? { connect: images.map(id => ({ id })) } : undefined,
+        date: new Date()
+      }
+    });
+    res.status(201).json({ success: true, report });
+  } catch (error) {
+    console.error('Create report error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get all reports for a resident (staff/admin)
+app.get('/api/residents/:residentId/reports', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const reports = await prisma.dailyReport.findMany({
+      where: { residentId: req.params.residentId },
+      orderBy: { date: 'desc' },
+      include: { staff: true, images: true }
+    });
+    res.json({ success: true, reports });
+  } catch (error) {
+    console.error('Get reports error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get single report by ID (staff/admin)
+app.get('/api/reports/:id', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const report = await prisma.dailyReport.findUnique({
+      where: { id: req.params.id },
+      include: { staff: true, images: true }
+    });
+    if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Get report error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update report (staff/admin)
+app.put('/api/reports/:id', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+  try {
+    const { vitals, mood, meals, activities, notes, images } = req.body;
+    const report = await prisma.dailyReport.update({
+      where: { id: req.params.id },
+      data: {
+        vitals,
+        mood,
+        meals,
+        activities,
+        notes,
+        images: images ? { set: images.map(id => ({ id })) } : undefined
+      }
+    });
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Update report error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Delete report (admin only)
+app.delete('/api/reports/:id', requireRole(['system_admin']), async (req, res) => {
+  try {
+    await prisma.dailyReport.delete({ where: { id: req.params.id } });
+    res.json({ success: true, message: 'Report deleted' });
+  } catch (error) {
+    console.error('Delete report error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // JWT authentication middleware
