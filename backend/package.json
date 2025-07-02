@@ -4,10 +4,10 @@
   "description": "Backend API for AIGE authentication system",
   "main": "server.js",
   "scripts": {
-    "start": "yarn prisma generate && node server.js",
+    "start": "npx prisma generate && node server.js",
     "dev": "nodemon server.js",
-    "build": "yarn prisma generate",
-    "postinstall": "yarn prisma generate",
+    "build": "npx prisma generate",
+    "postinstall": "npx prisma generate",
     "test": "jest"
   },
   "keywords": [
