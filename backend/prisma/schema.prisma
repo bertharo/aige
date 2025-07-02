@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// Prisma schema for AIGE
+// Run `npx prisma migrate dev --name init` after editing
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        UserRole
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  // Relations
+  residents   Resident[]        @relation("FamilyResidents")
+  reports     DailyReport[]     @relation("StaffReports")
+  messagesSent    Message[]     @relation("SenderMessages")
+  messagesReceived Message[]    @relation("RecipientMessages")
+  uploadedImages Image[]        @relation("UserUploadedImages")
+}
+
+enum UserRole {
+  facility_staff
+  family
+  system_admin
+}
+
+model Resident {
+  id            String        @id @default(uuid())
+  name          String
+  photo         String?       // URL to photo
+  room          String?
+  carePlan      String?
+  medicalInfo   String?
+  admittedAt    DateTime      @default(now())
+  dischargedAt  DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  // Relations
+  family        User[]        @relation("FamilyResidents")
+  reports       DailyReport[]
+  images        Image[]
+  messages      Message[]
+}
+
+model DailyReport {
+  id          String     @id @default(uuid())
+  resident    Resident   @relation(fields: [residentId], references: [id])
+  residentId  String
+  staff       User       @relation("StaffReports", fields: [staffId], references: [id])
+  staffId     String
+  date        DateTime   @default(now())
+  vitals      String?
+  mood        String?
+  meals       String?
+  activities  String?
+  notes       String?
+  images      Image[]
+  createdAt   DateTime   @default(now())
+}
+
+model Message {
+  id          String     @id @default(uuid())
+  threadId    String?
+  sender      User       @relation("SenderMessages", fields: [senderId], references: [id])
+  senderId    String
+  recipient   User       @relation("RecipientMessages", fields: [recipientId], references: [id])
+  recipientId String
+  resident    Resident?  @relation(fields: [residentId], references: [id])
+  residentId  String?
+  content     String
+  images      Image[]
+  createdAt   DateTime   @default(now())
+}
+
+model Image {
+  id          String     @id @default(uuid())
+  url         String
+  resident    Resident?  @relation(fields: [residentId], references: [id])
+  residentId  String?
+  report      DailyReport? @relation(fields: [reportId], references: [id])
+  reportId    String?
+  uploadedBy  User?      @relation("UserUploadedImages", fields: [uploadedById], references: [id])
+  uploadedById String?
+  tag         String?
+  date        DateTime?  @default(now())
+  metadata    String?
+  messages    Message[]
+}
