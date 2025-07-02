@@ -5,12 +5,22 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const prisma = new PrismaClient();
+
+// Initialize Prisma client with error handling
+let prisma;
+try {
+  const { PrismaClient } = require('@prisma/client');
+  prisma = new PrismaClient();
+  console.log('Prisma client initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize Prisma client:', error.message);
+  console.log('Running without database functionality');
+  prisma = null;
+}
 
 // Middleware
 app.use(helmet());
@@ -82,6 +92,15 @@ app.get('/health', (req, res) => {
 
 // Database health check endpoint
 app.get('/health/db', async (req, res) => {
+  if (!prisma) {
+    return res.status(500).json({
+      status: 'ERROR',
+      database: 'Prisma client not available',
+      error: 'Prisma client was not initialized properly',
+      timestamp: new Date().toISOString()
+    });
+  }
+
   try {
     await prisma.$connect();
     const userCount = await prisma.user.count();
@@ -104,6 +123,13 @@ app.get('/health/db', async (req, res) => {
 
 // Register endpoint
 app.post('/api/auth/register', validateRegistration, async (req, res) => {
+  if (!prisma) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database not available. Please try again later.'
+    });
+  }
+
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -190,6 +216,13 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
 
 // Login endpoint
 app.post('/api/auth/login', validateLogin, async (req, res) => {
+  if (!prisma) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database not available. Please try again later.'
+    });
+  }
+
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
