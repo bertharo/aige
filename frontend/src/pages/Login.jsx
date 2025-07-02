@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onSwitchToRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +65,12 @@ export default function Login({ onLogin }) {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+        <div className="mt-6 text-center text-sm text-gray-500">
+          Don&apos;t have an account?{' '}
+          <button className="text-indigo-600 hover:underline font-medium" onClick={onSwitchToRegister} type="button">
+            Sign up
+          </button>
+        </div>
       </div>
     </div>
   );
