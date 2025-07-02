@@ -4,7 +4,7 @@
   "description": "Backend API for AIGE authentication system",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "yarn prisma generate && node server.js",
     "dev": "nodemon server.js",
     "build": "yarn prisma generate",
     "postinstall": "yarn prisma generate",
