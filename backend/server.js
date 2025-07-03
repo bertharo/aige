@@ -293,10 +293,10 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
 });
 
 // Resident Management Endpoints
-// Create Resident (staff/admin)
-app.post('/api/residents', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+// Create Resident (family/system_admin)
+app.post('/api/residents', requireRole(['family', 'system_admin']), async (req, res) => {
   try {
-    const { name, photo, room, carePlan, medicalInfo } = req.body;
+    const { name, photo, room, carePlan, medicalInfo, facilityId, startDate, endDate } = req.body;
     const resident = await prisma.resident.create({
       data: {
         name,
@@ -307,7 +307,18 @@ app.post('/api/residents', requireRole(['facility_staff', 'system_admin']), asyn
         admittedAt: new Date()
       }
     });
-    res.status(201).json({ success: true, resident });
+    let assignment = null;
+    if (facilityId && startDate) {
+      assignment = await prisma.residentFacilityAssignment.create({
+        data: {
+          residentId: resident.id,
+          facilityId,
+          startDate: new Date(startDate),
+          endDate: endDate ? new Date(endDate) : null
+        }
+      });
+    }
+    res.status(201).json({ success: true, resident, assignment });
   } catch (error) {
     console.error('Create resident error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
