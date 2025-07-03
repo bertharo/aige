@@ -23,6 +23,7 @@ export default function Register({ onRegister, onSwitchToLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("family");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +39,7 @@ export default function Register({ onRegister, onSwitchToLogin }) {
       const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email, password, role })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Registration failed");
@@ -99,6 +100,19 @@ export default function Register({ onRegister, onSwitchToLogin }) {
               <li className={/[0-9]/.test(password) ? "text-green-600" : ""}>• One number</li>
               <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-600" : ""}>• One special character</li>
             </ul>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              required
+            >
+              <option value="family">Family</option>
+              <option value="facility_staff">Facility Staff</option>
+              <option value="system_admin">System Admin</option>
+            </select>
           </div>
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
           <button
