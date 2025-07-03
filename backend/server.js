@@ -856,6 +856,11 @@ app.get('/api/my-residents', requireRole(['family']), async (req, res) => {
   }
 });
 
+// Simple unprotected test route for debugging
+app.get('/api/my-residents-test', (req, res) => {
+  res.json({ success: true, message: 'Unprotected my-residents test route works!' });
+});
+
 // Start server (for Render deployment)
 app.listen(PORT, () => {
   console.log(`🚀 AIGE Backend server running on port ${PORT}`);
