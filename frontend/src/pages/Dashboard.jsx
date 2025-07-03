@@ -23,26 +23,28 @@ export default function Dashboard({ user, token }) {
   const [selectedFacility, setSelectedFacility] = useState(null);
   const navigate = useNavigate();
 
+  // Move fetchResidents outside useEffect so it can be called after adding a resident
+  const fetchResidents = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const endpoint = user.role === 'family'
+        ? '/api/my-residents'
+        : '/api/residents';
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch residents");
+      const data = await res.json();
+      setResidents(data.residents);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchResidents = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const endpoint = user.role === 'family'
-          ? '/api/my-residents'
-          : '/api/residents';
-        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error("Failed to fetch residents");
-        const data = await res.json();
-        setResidents(data.residents);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchResidents();
   }, [token, user.role]);
 
@@ -98,7 +100,8 @@ export default function Dashboard({ user, token }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add resident");
-      setResidents([...residents, data.resident]);
+      // Re-fetch residents after adding
+      await fetchResidents();
       setShowAdd(false);
       setNewResident({ name: "", room: "", photo: "", facilityId: "", startDate: "", endDate: "" });
       setPhotoPreview("");
