@@ -10,6 +10,12 @@ export default function Dashboard({ user, token }) {
   const [newResident, setNewResident] = useState({ name: "", room: "", photo: "" });
   const [photoPreview, setPhotoPreview] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [facilities, setFacilities] = useState([]);
+  const [facilityLoading, setFacilityLoading] = useState(false);
+  const [facilityError, setFacilityError] = useState("");
+  const [showFacilityModal, setShowFacilityModal] = useState(false);
+  const [editingFacility, setEditingFacility] = useState(null);
+  const [facilityForm, setFacilityForm] = useState({ name: "", address: "", contactPerson: "", status: "ACTIVE" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +37,28 @@ export default function Dashboard({ user, token }) {
     };
     fetchResidents();
   }, [token]);
+
+  useEffect(() => {
+    if (user.role === 'system_admin') {
+      const fetchFacilities = async () => {
+        setFacilityLoading(true);
+        setFacilityError("");
+        try {
+          const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error("Failed to fetch facilities");
+          const data = await res.json();
+          setFacilities(data.facilities);
+        } catch (err) {
+          setFacilityError(err.message);
+        } finally {
+          setFacilityLoading(false);
+        }
+      };
+      fetchFacilities();
+    }
+  }, [token, user.role]);
 
   const handleAddResident = async (e) => {
     e.preventDefault();
@@ -77,6 +105,73 @@ export default function Dashboard({ user, token }) {
     }
   };
 
+  const handleFacilityFormChange = (e) => {
+    setFacilityForm({ ...facilityForm, [e.target.name]: e.target.value });
+  };
+
+  const handleAddFacility = () => {
+    setEditingFacility(null);
+    setFacilityForm({ name: "", address: "", contactPerson: "", status: "ACTIVE" });
+    setShowFacilityModal(true);
+  };
+
+  const handleEditFacility = (facility) => {
+    setEditingFacility(facility);
+    setFacilityForm({
+      name: facility.name,
+      address: facility.address,
+      contactPerson: facility.contactPerson,
+      status: facility.status
+    });
+    setShowFacilityModal(true);
+  };
+
+  const handleFacilitySubmit = async (e) => {
+    e.preventDefault();
+    setFacilityError("");
+    try {
+      const url = `${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities${editingFacility ? `/${editingFacility.id}` : ""}`;
+      const method = editingFacility ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(facilityForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save facility");
+      if (editingFacility) {
+        setFacilities(facilities.map(f => f.id === data.facility.id ? data.facility : f));
+      } else {
+        setFacilities([...facilities, data.facility]);
+      }
+      setShowFacilityModal(false);
+    } catch (err) {
+      setFacilityError(err.message);
+    }
+  };
+
+  const handleFacilityStatus = async (facility, newStatus) => {
+    setFacilityError("");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${facility.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update status");
+      setFacilities(facilities.map(f => f.id === data.facility.id ? data.facility : f));
+    } catch (err) {
+      setFacilityError(err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
@@ -113,63 +208,196 @@ export default function Dashboard({ user, token }) {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Add Resident Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
-              onClick={() => setShowAdd(false)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h3 className="text-xl font-bold text-indigo-700 mb-4">Add Resident</h3>
-            <form onSubmit={handleAddResident} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                  value={newResident.name}
-                  onChange={e => setNewResident({ ...newResident, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                  value={newResident.room}
-                  onChange={e => setNewResident({ ...newResident, room: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full"
-                  onChange={handlePhotoChange}
-                />
-                {photoPreview && (
-                  <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
-                )}
-              </div>
+        {/* Facility Management Section for System Admins */}
+        {user.role === 'system_admin' && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-indigo-700">Facility Management</h2>
               <button
-                type="submit"
-                className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
-                disabled={user.role !== 'facility_staff' && user.role !== 'system_admin' || uploading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
+                onClick={handleAddFacility}
               >
-                {uploading ? "Uploading..." : "Add Resident"}
+                <PlusIcon className="w-5 h-5" /> Add Facility
               </button>
-            </form>
+            </div>
+            {facilityLoading ? (
+              <div className="text-center text-gray-500">Loading facilities...</div>
+            ) : facilityError ? (
+              <div className="text-center text-red-500">{facilityError}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-xl shadow">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Address</th>
+                      <th className="px-4 py-2 text-left">Contact Person</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {facilities.map(facility => (
+                      <tr key={facility.id} className="border-t">
+                        <td className="px-4 py-2">{facility.name}</td>
+                        <td className="px-4 py-2">{facility.address}</td>
+                        <td className="px-4 py-2">{facility.contactPerson}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${facility.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{facility.status}</span>
+                        </td>
+                        <td className="px-4 py-2 flex gap-2">
+                          <button
+                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
+                            onClick={() => handleEditFacility(facility)}
+                          >Edit</button>
+                          {facility.status === 'ACTIVE' ? (
+                            <button
+                              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs"
+                              onClick={() => handleFacilityStatus(facility, 'INACTIVE')}
+                            >Deactivate</button>
+                          ) : (
+                            <button
+                              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
+                              onClick={() => handleFacilityStatus(facility, 'ACTIVE')}
+                            >Reactivate</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Facility Modal */}
+            {showFacilityModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+                  <button
+                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+                    onClick={() => setShowFacilityModal(false)}
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                  <h3 className="text-xl font-bold text-indigo-700 mb-4">{editingFacility ? 'Edit Facility' : 'Add Facility'}</h3>
+                  <form onSubmit={handleFacilitySubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                        value={facilityForm.name}
+                        onChange={handleFacilityFormChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                      <input
+                        type="text"
+                        name="address"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                        value={facilityForm.address}
+                        onChange={handleFacilityFormChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                      <input
+                        type="text"
+                        name="contactPerson"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                        value={facilityForm.contactPerson}
+                        onChange={handleFacilityFormChange}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <select
+                        name="status"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                        value={facilityForm.status}
+                        onChange={handleFacilityFormChange}
+                        required
+                      >
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                      </select>
+                    </div>
+                    {facilityError && <div className="text-red-500 text-sm text-center">{facilityError}</div>}
+                    <button
+                      type="submit"
+                      className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
+                    >
+                      {editingFacility ? 'Save Changes' : 'Add Facility'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Add Resident Modal */}
+        {showAdd && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => setShowAdd(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <h3 className="text-xl font-bold text-indigo-700 mb-4">Add Resident</h3>
+              <form onSubmit={handleAddResident} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                    value={newResident.name}
+                    onChange={e => setNewResident({ ...newResident, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                    value={newResident.room}
+                    onChange={e => setNewResident({ ...newResident, room: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full"
+                    onChange={handlePhotoChange}
+                  />
+                  {photoPreview && (
+                    <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
+                  disabled={user.role !== 'facility_staff' && user.role !== 'system_admin' || uploading}
+                >
+                  {uploading ? "Uploading..." : "Add Resident"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 
