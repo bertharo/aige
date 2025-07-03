@@ -29,6 +29,7 @@ try {
 app.use(helmet());
 app.use(cors({
   origin: [
+    'https://aige.vercel.app', // deployed frontend
     process.env.FRONTEND_URL || 'https://aige-frontend.vercel.app',
     'http://localhost:3000',
     'http://localhost:5000'
