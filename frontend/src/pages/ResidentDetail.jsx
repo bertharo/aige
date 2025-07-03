@@ -476,7 +476,6 @@ export default function ResidentDetail({ token, role }) {
                 tileContent={tileContent}
                 tileClassName={tileClassName}
                 className="rounded-xl shadow-lg border-0 w-full max-w-md mx-auto text-base"
-                calendarType="US"
               />
               {/* List of visits for selected date */}
               <div className="mt-6">
