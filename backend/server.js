@@ -328,16 +328,18 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
 app.post('/api/residents', requireRole(['family', 'system_admin']), async (req, res) => {
   try {
     const { name, photo, room, carePlan, medicalInfo, facilityId, startDate, endDate } = req.body;
-    const resident = await prisma.resident.create({
-      data: {
-        name,
-        photo,
-        room,
-        carePlan,
-        medicalInfo,
-        admittedAt: new Date()
-      }
-    });
+    const data = {
+      name,
+      photo,
+      room,
+      carePlan,
+      medicalInfo,
+      admittedAt: new Date()
+    };
+    if (req.user.role === 'family') {
+      data.family = { connect: { id: req.user.userId } };
+    }
+    const resident = await prisma.resident.create({ data });
     let assignment = null;
     if (facilityId && startDate) {
       assignment = await prisma.residentFacilityAssignment.create({
