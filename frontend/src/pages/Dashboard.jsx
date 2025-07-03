@@ -16,6 +16,11 @@ export default function Dashboard({ user, token }) {
   const [showFacilityModal, setShowFacilityModal] = useState(false);
   const [editingFacility, setEditingFacility] = useState(null);
   const [facilityForm, setFacilityForm] = useState({ name: "", address: "", contactPerson: "", status: "ACTIVE" });
+  const [showFacilityResidents, setShowFacilityResidents] = useState(false);
+  const [facilityResidents, setFacilityResidents] = useState([]);
+  const [facilityResidentsLoading, setFacilityResidentsLoading] = useState(false);
+  const [facilityResidentsError, setFacilityResidentsError] = useState("");
+  const [selectedFacility, setSelectedFacility] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -175,6 +180,25 @@ export default function Dashboard({ user, token }) {
     }
   };
 
+  const handleFacilityRowClick = async (facility) => {
+    setSelectedFacility(facility);
+    setShowFacilityResidents(true);
+    setFacilityResidentsLoading(true);
+    setFacilityResidentsError("");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${facility.id}/residents`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to fetch residents");
+      setFacilityResidents(data.residents);
+    } catch (err) {
+      setFacilityResidentsError(err.message);
+    } finally {
+      setFacilityResidentsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
@@ -241,14 +265,14 @@ export default function Dashboard({ user, token }) {
                   </thead>
                   <tbody>
                     {facilities.map(facility => (
-                      <tr key={facility.id} className="border-t">
+                      <tr key={facility.id} className="border-t cursor-pointer hover:bg-indigo-50" onClick={() => handleFacilityRowClick(facility)}>
                         <td className="px-4 py-2">{facility.name}</td>
                         <td className="px-4 py-2">{facility.address}</td>
                         <td className="px-4 py-2">{facility.contactPerson}</td>
                         <td className="px-4 py-2">
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${facility.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{facility.status}</span>
                         </td>
-                        <td className="px-4 py-2 flex gap-2">
+                        <td className="px-4 py-2 flex gap-2" onClick={e => e.stopPropagation()}>
                           <button
                             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
                             onClick={() => handleEditFacility(facility)}
@@ -431,6 +455,41 @@ export default function Dashboard({ user, token }) {
                   {uploading ? "Uploading..." : "Add Resident"}
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Facility Residents Modal */}
+        {showFacilityResidents && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+                onClick={() => setShowFacilityResidents(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <h3 className="text-xl font-bold text-indigo-700 mb-4">Residents at {selectedFacility?.name}</h3>
+              {facilityResidentsLoading ? (
+                <div className="text-center text-gray-500">Loading residents...</div>
+              ) : facilityResidentsError ? (
+                <div className="text-center text-red-500">{facilityResidentsError}</div>
+              ) : facilityResidents.length === 0 ? (
+                <div className="text-center text-gray-500">No residents currently assigned.</div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {facilityResidents.map(r => (
+                    <li key={r.id} className="py-2 flex items-center gap-3">
+                      <img src={r.photo} alt={r.name} className="w-10 h-10 rounded-full object-cover border" />
+                      <div>
+                        <div className="font-semibold text-gray-800">{r.name}</div>
+                        <div className="text-xs text-gray-500">Room: {r.room}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}
