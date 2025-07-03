@@ -352,9 +352,21 @@ app.get('/api/residents', requireRole(['facility_staff', 'system_admin']), async
   }
 });
 
-// Get Resident by ID (staff/admin)
-app.get('/api/residents/:id', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+// Get Resident by ID (staff/admin/family)
+app.get('/api/residents/:id', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
   try {
+    if (req.user.role === 'family') {
+      // Only allow if this resident is associated with the family user
+      const resident = await prisma.resident.findUnique({
+        where: { id: req.params.id },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+      return res.json({ success: true, resident });
+    }
+    // Staff/admin: allow access
     const resident = await prisma.resident.findUnique({ where: { id: req.params.id } });
     if (!resident) return res.status(404).json({ success: false, message: 'Resident not found' });
     res.json({ success: true, resident });
