@@ -9,7 +9,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  // output   = "../generated/prisma"  // Removed to use default
 }
 
 datasource db {
