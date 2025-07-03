@@ -28,7 +28,10 @@ export default function Dashboard({ user, token }) {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents`, {
+        const endpoint = user.role === 'family'
+          ? '/api/my-residents'
+          : '/api/residents';
+        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error("Failed to fetch residents");
@@ -41,7 +44,7 @@ export default function Dashboard({ user, token }) {
       }
     };
     fetchResidents();
-  }, [token]);
+  }, [token, user.role]);
 
   useEffect(() => {
     if (user.role === 'system_admin') {
