@@ -74,6 +74,7 @@ const validateLogin = [
 // Middleware for role-based access
 function requireRole(roles) {
   return (req, res, next) => {
+    console.log('requireRole called for', req.path, 'roles:', roles);
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ success: false, message: 'Access token required' });
@@ -668,6 +669,7 @@ app.get('/api/residents/:residentId/messages', authenticateToken, async (req, re
 
 // JWT authentication middleware
 function authenticateToken(req, res, next) {
+  console.log('authenticateToken called for', req.path);
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
