@@ -450,6 +450,66 @@ app.delete('/api/reports/:id', requireRole(['system_admin']), async (req, res) =
   }
 });
 
+// Facility Management Endpoints (system_admin only)
+app.get('/api/facilities', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const facilities = await prisma.facility.findMany();
+    res.json({ success: true, facilities });
+  } catch (error) {
+    console.error('Get facilities error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+app.post('/api/facilities', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const { name, address, contactPerson, status } = req.body;
+    const facility = await prisma.facility.create({
+      data: {
+        name,
+        address,
+        contactPerson,
+        status: status || 'ACTIVE',
+      }
+    });
+    res.status(201).json({ success: true, facility });
+  } catch (error) {
+    console.error('Create facility error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+app.put('/api/facilities/:id', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const { name, address, contactPerson, status } = req.body;
+    const facility = await prisma.facility.update({
+      where: { id: req.params.id },
+      data: { name, address, contactPerson, status }
+    });
+    res.json({ success: true, facility });
+  } catch (error) {
+    console.error('Update facility error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+app.patch('/api/facilities/:id/status', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['ACTIVE', 'INACTIVE'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+    const facility = await prisma.facility.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
+    res.json({ success: true, facility });
+  } catch (error) {
+    console.error('Change facility status error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // JWT authentication middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
