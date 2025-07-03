@@ -7,7 +7,7 @@ export default function Dashboard({ user, token }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [newResident, setNewResident] = useState({ name: "", room: "", photo: "" });
+  const [newResident, setNewResident] = useState({ name: "", room: "", photo: "", facilityId: "", startDate: "", endDate: "" });
   const [photoPreview, setPhotoPreview] = useState("");
   const [uploading, setUploading] = useState(false);
   const [facilities, setFacilities] = useState([]);
@@ -82,14 +82,17 @@ export default function Dashboard({ user, token }) {
         body: JSON.stringify({
           name: newResident.name,
           room: newResident.room,
-          photo: photoUrl
+          photo: photoUrl,
+          facilityId: newResident.facilityId || undefined,
+          startDate: newResident.startDate || undefined,
+          endDate: newResident.endDate || undefined
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add resident");
       setResidents([...residents, data.resident]);
       setShowAdd(false);
-      setNewResident({ name: "", room: "", photo: "" });
+      setNewResident({ name: "", room: "", photo: "", facilityId: "", startDate: "", endDate: "" });
       setPhotoPreview("");
     } catch (err) {
       setError(err.message);
@@ -180,7 +183,6 @@ export default function Dashboard({ user, token }) {
           <button
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
             onClick={() => setShowAdd(true)}
-            disabled={user.role !== 'facility_staff' && user.role !== 'system_admin'}
           >
             <PlusIcon className="w-5 h-5" /> Add Resident
           </button>
@@ -386,10 +388,45 @@ export default function Dashboard({ user, token }) {
                     <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
                   )}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Facility</label>
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                    value={newResident.facilityId}
+                    onChange={e => setNewResident({ ...newResident, facilityId: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Facility</option>
+                    {facilities.map(facility => (
+                      <option key={facility.id} value={facility.id}>{facility.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                      value={newResident.startDate}
+                      onChange={e => setNewResident({ ...newResident, startDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                      value={newResident.endDate}
+                      onChange={e => setNewResident({ ...newResident, endDate: e.target.value })}
+                    />
+                  </div>
+                </div>
                 <button
                   type="submit"
                   className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
-                  disabled={user.role !== 'facility_staff' && user.role !== 'system_admin' || uploading}
+                  disabled={uploading}
                 >
                   {uploading ? "Uploading..." : "Add Resident"}
                 </button>
