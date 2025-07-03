@@ -829,6 +829,21 @@ app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
   }
 });
 
+// Get all residents for family (only their associated residents)
+app.get('/api/my-residents', requireRole(['family']), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { residents: true }
+    });
+    res.json({ success: true, residents: user.residents });
+  } catch (error) {
+    console.error('Get my residents error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Start server (for Render deployment)
 app.listen(PORT, () => {
   console.log(`🚀 AIGE Backend server running on port ${PORT}`);
