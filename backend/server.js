@@ -858,6 +858,18 @@ app.get('/api/my-residents', requireRole(['family']), async (req, res) => {
   }
 });
 
+// Unique log line to confirm deployment
+console.log('🚦 TEST ROUTE REGISTERED: /api/test - Deployment check at', new Date().toISOString());
+
+// Simple test route
+app.get('/api/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Test route is working! 🎉',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Start server (for Render deployment)
 app.listen(PORT, () => {
   console.log(`🚀 AIGE Backend server running on port ${PORT}`);
