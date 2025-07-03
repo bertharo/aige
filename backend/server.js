@@ -27,6 +27,18 @@ try {
   prisma = null;
 }
 
+// Unique log line to confirm deployment
+console.log('🚦 TEST ROUTE REGISTERED: /api/test - Deployment check at', new Date().toISOString());
+
+// Simple test route
+app.get('/api/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Test route is working! 🎉',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -856,18 +868,6 @@ app.get('/api/my-residents', requireRole(['family']), async (req, res) => {
     console.error('Get my residents error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
-});
-
-// Unique log line to confirm deployment
-console.log('🚦 TEST ROUTE REGISTERED: /api/test - Deployment check at', new Date().toISOString());
-
-// Simple test route
-app.get('/api/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Test route is working! 🎉',
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Start server (for Render deployment)
