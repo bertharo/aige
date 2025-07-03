@@ -28,7 +28,7 @@ export default function Dashboard({ user, token }) {
         });
         if (!res.ok) throw new Error("Failed to fetch residents");
         const data = await res.json();
-        setResidents(data);
+        setResidents(data.residents);
       } catch (err) {
         setError(err.message);
       } finally {
