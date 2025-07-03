@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
@@ -40,7 +40,7 @@ export default function ResidentDetail({ token, role }) {
   // Get current userId from token
   let userId = null;
   try {
-    userId = jwt_decode(token).userId;
+    userId = jwtDecode(token).userId;
   } catch {}
 
   useEffect(() => {
