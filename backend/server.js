@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -68,6 +70,18 @@ function requireRole(roles) {
     });
   };
 }
+
+// Multer setup for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, 'public', 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname.replace(/\s+/g, '_'));
+  }
+});
+const upload = multer({ storage });
 
 // Routes
 app.get('/', (req, res) => {
@@ -398,9 +412,19 @@ app.post('/api/reports', requireRole(['facility_staff', 'system_admin']), async 
   }
 });
 
-// Get all reports for a resident (staff/admin)
-app.get('/api/residents/:residentId/reports', requireRole(['facility_staff', 'system_admin']), async (req, res) => {
+// Get all reports for a resident (staff/admin/family)
+app.get('/api/residents/:residentId/reports', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
   try {
+    // If user is family, ensure they are associated with the resident
+    if (req.user.role === 'family') {
+      const resident = await prisma.resident.findUnique({
+        where: { id: req.params.residentId },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
     const reports = await prisma.dailyReport.findMany({
       where: { residentId: req.params.residentId },
       orderBy: { date: 'desc' },
@@ -544,6 +568,76 @@ app.get('/api/facilities/:id/residents', requireRole(['system_admin', 'family', 
   }
 });
 
+// Image upload endpoint
+app.post('/api/images/upload', authenticateToken, upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'No files uploaded' });
+    }
+    const images = await Promise.all(req.files.map(async (file) => {
+      const url = `/uploads/${file.filename}`;
+      const image = await prisma.image.create({
+        data: {
+          url,
+          uploadedById: req.user.userId
+        }
+      });
+      return { id: image.id, url: image.url };
+    }));
+    res.status(201).json({ success: true, imageIds: images.map(i => i.id), images });
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Send a message (staff/family)
+app.post('/api/messages', authenticateToken, async (req, res) => {
+  try {
+    const { residentId, recipientId, content, images } = req.body;
+    if (!residentId || !recipientId || !content) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    const message = await prisma.message.create({
+      data: {
+        residentId,
+        senderId: req.user.userId,
+        recipientId,
+        content,
+        images: images ? { connect: images.map(id => ({ id })) } : undefined
+      },
+      include: { sender: true, recipient: true, images: true }
+    });
+    res.status(201).json({ success: true, message });
+  } catch (error) {
+    console.error('Send message error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get all messages for a resident involving the current user
+app.get('/api/residents/:residentId/messages', authenticateToken, async (req, res) => {
+  try {
+    const residentId = req.params.residentId;
+    const userId = req.user.userId;
+    const messages = await prisma.message.findMany({
+      where: {
+        residentId,
+        OR: [
+          { senderId: userId },
+          { recipientId: userId }
+        ]
+      },
+      orderBy: { createdAt: 'asc' },
+      include: { sender: true, recipient: true, images: true }
+    });
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Get messages error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // JWT authentication middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -583,6 +677,154 @@ app.use('*', (req, res) => {
     success: false,
     message: 'Route not found'
   });
+});
+
+// Create/request a visit (family, staff, admin)
+app.post('/api/visits', authenticateToken, async (req, res) => {
+  try {
+    const { residentId, visitDate, notes } = req.body;
+    if (!residentId || !visitDate) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    const visit = await prisma.visit.create({
+      data: {
+        residentId,
+        requestedById: req.user.userId,
+        visitDate: new Date(visitDate),
+        notes
+      },
+      include: { resident: true, requestedBy: true, scheduledBy: true }
+    });
+    res.status(201).json({ success: true, visit });
+  } catch (error) {
+    console.error('Create visit error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// List all visits for a resident (family, staff, admin)
+app.get('/api/residents/:residentId/visits', authenticateToken, async (req, res) => {
+  try {
+    const residentId = req.params.residentId;
+    // Family can only see visits for their associated residents
+    if (req.user.role === 'family') {
+      const resident = await prisma.resident.findUnique({
+        where: { id: residentId },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
+    const visits = await prisma.visit.findMany({
+      where: { residentId },
+      orderBy: { visitDate: 'asc' },
+      include: { resident: true, requestedBy: true, scheduledBy: true }
+    });
+    res.json({ success: true, visits });
+  } catch (error) {
+    console.error('Get visits error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update visit (staff/admin can update any, requester can cancel)
+app.put('/api/visits/:id', authenticateToken, async (req, res) => {
+  try {
+    const { status, visitDate, notes } = req.body;
+    const visit = await prisma.visit.findUnique({ where: { id: req.params.id } });
+    if (!visit) return res.status(404).json({ success: false, message: 'Visit not found' });
+    // Only staff/admin or the requester can update
+    if (!(req.user.role === 'facility_staff' || req.user.role === 'system_admin' || visit.requestedById === req.user.userId)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    const updated = await prisma.visit.update({
+      where: { id: req.params.id },
+      data: {
+        status,
+        visitDate: visitDate ? new Date(visitDate) : undefined,
+        notes,
+        scheduledById: (status && status !== 'REQUESTED') ? req.user.userId : visit.scheduledById
+      },
+      include: { resident: true, requestedBy: true, scheduledBy: true }
+    });
+    res.json({ success: true, visit: updated });
+  } catch (error) {
+    console.error('Update visit error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Cancel visit (staff/admin/requester)
+app.delete('/api/visits/:id', authenticateToken, async (req, res) => {
+  try {
+    const visit = await prisma.visit.findUnique({ where: { id: req.params.id } });
+    if (!visit) return res.status(404).json({ success: false, message: 'Visit not found' });
+    if (!(req.user.role === 'facility_staff' || req.user.role === 'system_admin' || visit.requestedById === req.user.userId)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    await prisma.visit.delete({ where: { id: req.params.id } });
+    res.json({ success: true, message: 'Visit cancelled' });
+  } catch (error) {
+    console.error('Delete visit error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Create/send a notification
+app.post('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const { userId, type, message, residentId, visitId, reportId } = req.body;
+    if (!userId || !type || !message) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        type,
+        message,
+        residentId,
+        visitId,
+        reportId
+      }
+    });
+    res.status(201).json({ success: true, notification });
+  } catch (error) {
+    console.error('Create notification error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// List notifications for current user
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user.userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, notifications });
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Mark notification as read
+app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
+  try {
+    const notification = await prisma.notification.findUnique({ where: { id: req.params.id } });
+    if (!notification || notification.userId !== req.user.userId) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    const updated = await prisma.notification.update({
+      where: { id: req.params.id },
+      data: { read: true }
+    });
+    res.json({ success: true, notification: updated });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // Start server (for Render deployment)
