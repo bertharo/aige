@@ -799,7 +799,8 @@ app.delete('/api/visits/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Create/send a notification
+// Registering /api/notifications
+console.log('Registering /api/notifications');
 app.post('/api/notifications', authenticateToken, async (req, res) => {
   try {
     const { userId, type, message, residentId, visitId, reportId } = req.body;
@@ -823,7 +824,7 @@ app.post('/api/notifications', authenticateToken, async (req, res) => {
   }
 });
 
-// List notifications for current user
+console.log('Registering GET /api/notifications');
 app.get('/api/notifications', authenticateToken, async (req, res) => {
   try {
     const notifications = await prisma.notification.findMany({
@@ -837,25 +838,8 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
   }
 });
 
-// Mark notification as read
-app.put('/api/notifications/:id/read', authenticateToken, async (req, res) => {
-  try {
-    const notification = await prisma.notification.findUnique({ where: { id: req.params.id } });
-    if (!notification || notification.userId !== req.user.userId) {
-      return res.status(404).json({ success: false, message: 'Notification not found' });
-    }
-    const updated = await prisma.notification.update({
-      where: { id: req.params.id },
-      data: { read: true }
-    });
-    res.json({ success: true, notification: updated });
-  } catch (error) {
-    console.error('Mark notification read error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// Get all residents for family (only their associated residents)
+// Registering /api/my-residents
+console.log('Registering /api/my-residents');
 app.get('/api/my-residents', requireRole(['family']), async (req, res) => {
   try {
     const userId = req.user.userId;
