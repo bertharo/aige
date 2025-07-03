@@ -5,6 +5,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "cra-template-pwa": "2.0.0",
+    "jwt-decode": "^4.0.0",
     "multer": "^2.0.1",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
