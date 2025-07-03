@@ -521,6 +521,29 @@ app.patch('/api/facilities/:id/status', requireRole(['system_admin']), async (re
   }
 });
 
+// Get residents currently assigned to a facility
+app.get('/api/facilities/:id/residents', requireRole(['system_admin', 'family', 'facility_staff']), async (req, res) => {
+  try {
+    const today = new Date();
+    const assignments = await prisma.residentFacilityAssignment.findMany({
+      where: {
+        facilityId: req.params.id,
+        startDate: { lte: today },
+        OR: [
+          { endDate: null },
+          { endDate: { gte: today } }
+        ]
+      },
+      include: { resident: true }
+    });
+    const residents = assignments.map(a => a.resident);
+    res.json({ success: true, residents });
+  } catch (error) {
+    console.error('Get facility residents error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // JWT authentication middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
