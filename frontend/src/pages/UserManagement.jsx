@@ -50,8 +50,8 @@ export default function UserManagement({ user, token }) {
 
   useEffect(() => {
     fetchProfile();
-    // Allow system admins and facility staff to see users
-    if (user.role === 'system_admin' || user.role === 'facility_staff') {
+    // Allow system admins, facility staff, and family members to see users
+    if (user.role === 'system_admin' || user.role === 'facility_staff' || user.role === 'family') {
       fetchAllUsers();
     }
   }, [user.role]);
@@ -343,15 +343,17 @@ export default function UserManagement({ user, token }) {
             )}
           </div>
 
-          {/* User Management Section (Admin and Staff) */}
-          {(user.role === 'system_admin' || user.role === 'facility_staff') && (
+          {/* User Management Section (Admin, Staff, and Family) */}
+          {(user.role === 'system_admin' || user.role === 'facility_staff' || user.role === 'family') && (
             <div className="bg-white rounded-3xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-100 rounded-xl">
                     <Users className="w-5 h-5 text-green-600" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {user.role === 'family' ? 'Family Members' : 'User Management'}
+                  </h2>
                 </div>
                 {user.role === 'system_admin' && (
                   <button
@@ -374,7 +376,8 @@ export default function UserManagement({ user, token }) {
                   const canEdit = 
                     listedUser.id === profile?.id || 
                     user.role === 'system_admin' ||
-                    (user.role === 'facility_staff' && listedUser.role === 'family');
+                    (user.role === 'facility_staff' && listedUser.role === 'family') ||
+                    (user.role === 'family' && listedUser.role === 'family' && listedUser.id !== profile?.id);
                   
                   const canDelete = 
                     listedUser.id !== profile?.id && (
@@ -641,7 +644,7 @@ export default function UserManagement({ user, token }) {
                 </div>
                 
                 {/* Only system admins can change roles */}
-                {user.role === 'system_admin' && (
+                {user.role === 'system_admin' && !editingUser && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
                     <select

@@ -141,6 +141,43 @@ async function isFamilyMember(userId) {
   }
 }
 
+// Helper function to check if two family members are associated with the same residents
+async function areFamilyMembersAssociated(userId1, userId2) {
+  try {
+    // Get residents associated with both family members
+    const user1Residents = await prisma.resident.findMany({
+      where: {
+        family: {
+          some: {
+            id: userId1
+          }
+        }
+      },
+      select: { id: true }
+    });
+    
+    const user2Residents = await prisma.resident.findMany({
+      where: {
+        family: {
+          some: {
+            id: userId2
+          }
+        }
+      },
+      select: { id: true }
+    });
+    
+    // Check if they share any residents
+    const user1ResidentIds = user1Residents.map(r => r.id);
+    const user2ResidentIds = user2Residents.map(r => r.id);
+    
+    return user1ResidentIds.some(id => user2ResidentIds.includes(id));
+  } catch (error) {
+    console.error('Error checking if family members are associated:', error);
+    return false;
+  }
+}
+
 // Cloudinary storage configuration
 const cloudinaryStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -505,8 +542,44 @@ app.get('/api/users', authenticateToken, async (req, res) => {
           updatedAt: true
         }
       });
+    } else if (currentUser.role === 'family') {
+      // Family members can see themselves and other family members associated with the same residents
+      const userResidents = await prisma.resident.findMany({
+        where: {
+          family: {
+            some: {
+              id: currentUser.userId
+            }
+          }
+        },
+        include: {
+          family: {
+            where: {
+              role: 'family'
+            },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        }
+      });
+      
+      // Extract unique family members from all associated residents
+      const familyMembers = new Map();
+      userResidents.forEach(resident => {
+        resident.family.forEach(familyMember => {
+          familyMembers.set(familyMember.id, familyMember);
+        });
+      });
+      
+      users = Array.from(familyMembers.values());
     } else {
-      // Family members can only see themselves
+      // Other roles can only see themselves
       users = await prisma.user.findMany({
         where: { id: currentUser.userId },
         select: {
@@ -538,10 +611,16 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
     // 1. Users can always edit their own profile
     // 2. System admins can edit any user
     // 3. Facility staff can edit family members
-    const canEdit = 
+    // 4. Family members can edit other family members associated with the same residents
+    let canEdit = 
       targetUserId === currentUser.userId || 
       currentUser.role === 'system_admin' ||
       (currentUser.role === 'facility_staff' && await isFamilyMember(targetUserId));
+    
+    // Check if family member can edit another family member
+    if (!canEdit && currentUser.role === 'family') {
+      canEdit = await areFamilyMembersAssociated(targetUserId, currentUser.userId);
+    }
     
     if (!canEdit) {
       return res.status(403).json({ 
@@ -700,6 +779,72 @@ app.delete('/api/users/:id', authenticateToken, async (req, res) => {
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get family members associated with the same residents (for family users)
+app.get('/api/family-members', authenticateToken, async (req, res) => {
+  try {
+    const currentUser = req.user;
+    
+    // Only family members can access this endpoint
+    if (currentUser.role !== 'family') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only family members can access family member information' 
+      });
+    }
+    
+    // Get all residents associated with the current family member
+    const userResidents = await prisma.resident.findMany({
+      where: {
+        family: {
+          some: {
+            id: currentUser.userId
+          }
+        }
+      },
+      include: {
+        family: {
+          where: {
+            role: 'family'
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
+      }
+    });
+    
+    // Extract unique family members from all associated residents
+    const familyMembers = new Map();
+    userResidents.forEach(resident => {
+      resident.family.forEach(familyMember => {
+        if (familyMember.id !== currentUser.userId) { // Exclude current user
+          familyMembers.set(familyMember.id, familyMember);
+        }
+      });
+    });
+    
+    const uniqueFamilyMembers = Array.from(familyMembers.values());
+    
+    res.json({ 
+      success: true, 
+      familyMembers: uniqueFamilyMembers,
+      associatedResidents: userResidents.map(r => ({
+        id: r.id,
+        name: r.name,
+        photo: r.photo
+      }))
+    });
+  } catch (error) {
+    console.error('Get family members error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
