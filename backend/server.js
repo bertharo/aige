@@ -703,13 +703,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found'
-  });
-});
+// 404 handler - MOVED TO END OF FILE
 
 // Create/request a visit (family, staff, admin)
 app.post('/api/visits', authenticateToken, async (req, res) => {
@@ -1014,6 +1008,14 @@ app.get('/api/residents/:residentId/calendar', requireRole(['facility_staff', 's
     console.error('Get resident calendar error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
+});
+
+// 404 handler - must be last
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
 // Start server (for Render deployment)
