@@ -176,18 +176,40 @@ export default function UserManagement({ user, token }) {
     e.preventDefault();
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users/${editingUser.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userForm)
-      });
+      let response;
+      
+      if (editingUser) {
+        // Update existing user
+        response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(userForm)
+        });
+      } else {
+        // Create new user/family member
+        const endpoint = user.role === 'family' ? '/api/family-members' : '/api/users';
+        response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(userForm)
+        });
+      }
 
       const data = await response.json();
       if (data.success) {
-        setAllUsers(allUsers.map(u => u.id === editingUser.id ? data.user : u));
+        if (editingUser) {
+          setAllUsers(allUsers.map(u => u.id === editingUser.id ? data.user : u));
+        } else {
+          // Add new user to the list
+          const newUser = user.role === 'family' ? data.familyMember : data.user;
+          setAllUsers([...allUsers, newUser]);
+        }
         setShowUserModal(false);
         setEditingUser(null);
         setError(null);
@@ -355,7 +377,7 @@ export default function UserManagement({ user, token }) {
                     {user.role === 'family' ? 'Family Members' : 'User Management'}
                   </h2>
                 </div>
-                {user.role === 'system_admin' && (
+                {(user.role === 'system_admin' || user.role === 'family') && (
                   <button
                     onClick={() => {
                       setEditingUser(null);
@@ -365,7 +387,7 @@ export default function UserManagement({ user, token }) {
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
                   >
                     <Plus className="w-4 h-4" />
-                    Add User
+                    {user.role === 'family' ? 'Add Family Member' : 'Add User'}
                   </button>
                 )}
               </div>
