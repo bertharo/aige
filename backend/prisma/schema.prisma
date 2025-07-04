@@ -23,6 +23,7 @@ model User {
   email       String   @unique
   password    String
   role        UserRole
+  photo       String?  // URL to profile photo
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?  // ID of the user who created this user (for family members)

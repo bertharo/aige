@@ -46,6 +46,9 @@ export default function UserManagement({ user, token }) {
     currentPassword: ''
   });
 
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [userPhoto, setUserPhoto] = useState(null);
+
   const [deletePassword, setDeletePassword] = useState('');
 
   useEffect(() => {
@@ -112,23 +115,25 @@ export default function UserManagement({ user, token }) {
     }
 
     try {
-      const updateData = {
-        name: profileForm.name,
-        email: profileForm.email
-      };
+      const formData = new FormData();
+      formData.append('name', profileForm.name);
+      formData.append('email', profileForm.email);
 
       if (profileForm.newPassword) {
-        updateData.currentPassword = profileForm.currentPassword;
-        updateData.newPassword = profileForm.newPassword;
+        formData.append('currentPassword', profileForm.currentPassword);
+        formData.append('newPassword', profileForm.newPassword);
+      }
+
+      if (profilePhoto) {
+        formData.append('photo', profilePhoto);
       }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/user/profile`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updateData)
+        body: formData
       });
 
       const data = await response.json();
@@ -180,13 +185,26 @@ export default function UserManagement({ user, token }) {
       
       if (editingUser) {
         // Update existing user
+        const formData = new FormData();
+        formData.append('name', userForm.name);
+        formData.append('email', userForm.email);
+        formData.append('role', userForm.role);
+
+        if (userForm.newPassword) {
+          formData.append('currentPassword', userForm.currentPassword);
+          formData.append('newPassword', userForm.newPassword);
+        }
+
+        if (userPhoto) {
+          formData.append('photo', userPhoto);
+        }
+
         response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users/${editingUser.id}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(userForm)
+          body: formData
         });
       } else {
         // Create new user/family member
@@ -252,6 +270,7 @@ export default function UserManagement({ user, token }) {
       newPassword: '',
       currentPassword: ''
     });
+    setUserPhoto(null); // Reset photo selection
     setShowUserModal(true);
   };
 
@@ -316,9 +335,17 @@ export default function UserManagement({ user, token }) {
             {profile && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
-                  <div className="p-2 bg-indigo-100 rounded-xl">
-                    <User className="w-4 h-4 text-indigo-600" />
-                  </div>
+                  {profile.photo ? (
+                    <img 
+                      src={profile.photo} 
+                      alt="Profile" 
+                      className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200"
+                    />
+                  ) : (
+                    <div className="p-2 bg-indigo-100 rounded-xl">
+                      <User className="w-4 h-4 text-indigo-600" />
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
                     <p className="font-semibold text-gray-800">{profile.name}</p>
@@ -411,9 +438,17 @@ export default function UserManagement({ user, token }) {
                     <div key={listedUser.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-indigo-100 rounded-xl">
-                            <User className="w-4 h-4 text-indigo-600" />
-                          </div>
+                          {listedUser.photo ? (
+                            <img 
+                              src={listedUser.photo} 
+                              alt="Profile" 
+                              className="w-10 h-10 rounded-full object-cover border-2 border-indigo-200"
+                            />
+                          ) : (
+                            <div className="p-2 bg-indigo-100 rounded-xl">
+                              <User className="w-4 h-4 text-indigo-600" />
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-800">{listedUser.name}</p>
                             <p className="text-sm text-gray-500">{listedUser.email}</p>
@@ -497,6 +532,26 @@ export default function UserManagement({ user, token }) {
                     onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
                     required
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    onChange={e => setProfilePhoto(e.target.files[0])}
+                  />
+                  {profile?.photo && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 mb-2">Current photo:</p>
+                      <img 
+                        src={profile.photo} 
+                        alt="Profile" 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -663,6 +718,26 @@ export default function UserManagement({ user, token }) {
                     onChange={e => setUserForm({ ...userForm, email: e.target.value })}
                     required
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Photo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                    onChange={e => setUserPhoto(e.target.files[0])}
+                  />
+                  {editingUser?.photo && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 mb-2">Current photo:</p>
+                      <img 
+                        src={editingUser.photo} 
+                        alt="Profile" 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Only system admins can change roles */}

@@ -423,7 +423,16 @@ app.post('/api/auth/login', validateLogin, async (req, res) => {
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId }
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        photo: true,
+        createdAt: true,
+        updatedAt: true
+      }
     });
     
   if (!user) {
@@ -433,10 +442,9 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     });
   }
 
-  const { password: _, ...userWithoutPassword } = user;
   res.json({
     success: true,
-    user: userWithoutPassword
+    user: user
   });
   } catch (error) {
     console.error('Get user profile error:', error);
@@ -445,7 +453,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 });
 
 // Update current user profile
-app.put('/api/user/profile', authenticateToken, async (req, res) => {
+app.put('/api/user/profile', authenticateToken, upload.single('photo'), async (req, res) => {
   try {
     const { name, email, currentPassword, newPassword } = req.body;
     
@@ -483,6 +491,11 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (newPassword) updateData.password = await bcrypt.hash(newPassword, 10);
+    
+    // Handle photo upload
+    if (req.file) {
+      updateData.photo = req.file.path; // Cloudinary URL
+    }
     
     const updatedUser = await prisma.user.update({
       where: { id: req.user.userId },
@@ -537,6 +550,7 @@ app.delete('/api/user/profile', authenticateToken, async (req, res) => {
 app.get('/api/users', authenticateToken, async (req, res) => {
   try {
     const currentUser = req.user;
+    console.log('API /api/users called by:', currentUser);
     
     let users;
     if (currentUser.role === 'system_admin') {
@@ -547,10 +561,12 @@ app.get('/api/users', authenticateToken, async (req, res) => {
           name: true,
           email: true,
           role: true,
+          photo: true,
           createdAt: true,
           updatedAt: true
         }
       });
+      console.log('Admin can see all users:', users.length);
     } else if (currentUser.role === 'facility_staff') {
       // Staff can only see family members
       users = await prisma.user.findMany({
@@ -560,10 +576,12 @@ app.get('/api/users', authenticateToken, async (req, res) => {
           name: true,
           email: true,
           role: true,
+          photo: true,
           createdAt: true,
           updatedAt: true
         }
       });
+      console.log('Staff can see family members:', users.length);
     } else if (currentUser.role === 'family') {
       // Family members can see themselves and family members they created
       users = await prisma.user.findMany({
@@ -578,12 +596,13 @@ app.get('/api/users', authenticateToken, async (req, res) => {
           name: true,
           email: true,
           role: true,
+          photo: true,
           createdAt: true,
           updatedAt: true
         }
       });
       
-      console.log('Family user can see:', users.map(u => ({ id: u.id, name: u.name, email: u.email, createdBy: u.createdBy })));
+      console.log('Family user can see:', users.map(u => ({ id: u.id, name: u.name, email: u.email })));
     } else {
       // Other roles can only see themselves
       users = await prisma.user.findMany({
@@ -593,12 +612,15 @@ app.get('/api/users', authenticateToken, async (req, res) => {
           name: true,
           email: true,
           role: true,
+          photo: true,
           createdAt: true,
           updatedAt: true
         }
       });
+      console.log('Other role can see themselves:', users.length);
     }
     
+    console.log('Returning users:', users);
     res.json({ success: true, users });
   } catch (error) {
     console.error('Get users error:', error);
@@ -607,7 +629,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 });
 
 // Update user (admin, staff, or self)
-app.put('/api/users/:id', authenticateToken, async (req, res) => {
+app.put('/api/users/:id', authenticateToken, upload.single('photo'), async (req, res) => {
   try {
     const { name, email, role, newPassword, currentPassword } = req.body;
     const targetUserId = req.params.id;
@@ -705,6 +727,11 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
     if (role && currentUser.role === 'system_admin') updateData.role = role;
     if (newPassword) updateData.password = await bcrypt.hash(newPassword, 10);
     
+    // Handle photo upload
+    if (req.file) {
+      updateData.photo = req.file.path; // Cloudinary URL
+    }
+    
     const updatedUser = await prisma.user.update({
       where: { id: targetUserId },
       data: updateData,
@@ -713,6 +740,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
         name: true,
         email: true,
         role: true,
+        photo: true,
         createdAt: true,
         updatedAt: true
       }
