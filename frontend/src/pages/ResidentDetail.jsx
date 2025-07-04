@@ -428,7 +428,7 @@ export default function ResidentDetail({ token, role }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  <span>{user.role === 'family' ? 'Family Member' : 'Resident'}</span>
+                  <span>{role === 'family' ? 'Family Member' : 'Resident'}</span>
                 </div>
               </div>
             </div>
