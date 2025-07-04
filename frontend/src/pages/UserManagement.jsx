@@ -56,12 +56,15 @@ export default function UserManagement({ user, token }) {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/user/profile', {
+      console.log('Fetching profile with token:', token ? 'Token exists' : 'No token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/user/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      console.log('Profile response status:', response.status);
       const data = await response.json();
+      console.log('Profile response data:', data);
       if (data.success) {
         setProfile(data.user);
         setProfileForm({
@@ -75,6 +78,7 @@ export default function UserManagement({ user, token }) {
         setError(data.message);
       }
     } catch (error) {
+      console.error('Profile fetch error:', error);
       setError('Failed to load profile');
     } finally {
       setLoading(false);
@@ -83,7 +87,7 @@ export default function UserManagement({ user, token }) {
 
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -116,7 +120,7 @@ export default function UserManagement({ user, token }) {
         updateData.newPassword = profileForm.newPassword;
       }
 
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +148,7 @@ export default function UserManagement({ user, token }) {
     e.preventDefault();
     
     try {
-      const response = await fetch('/api/user/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/user/profile`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +174,7 @@ export default function UserManagement({ user, token }) {
     e.preventDefault();
     
     try {
-      const response = await fetch(`/api/users/${editingUser.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +201,7 @@ export default function UserManagement({ user, token }) {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
