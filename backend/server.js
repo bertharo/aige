@@ -866,7 +866,18 @@ app.get('/api/my-residents-test', (req, res) => {
 // Simple non-API test route for debugging
 app.get('/hello', (req, res) => res.send('Hello world!'));
 
+// Test endpoint for new features
+app.get('/api/test-new-features', (req, res) => {
+  res.json({
+    success: true,
+    message: 'New features are deployed! 🎉',
+    features: ['feed', 'docs', 'calendar'],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Get resident documentation (care plans, medical info, etc.)
+console.log('Registering /api/residents/:residentId/docs');
 app.get('/api/residents/:residentId/docs', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
   try {
     const residentId = req.params.residentId;
@@ -920,6 +931,7 @@ app.get('/api/residents/:residentId/docs', requireRole(['facility_staff', 'syste
 });
 
 // Get resident daily feed (reports with images)
+console.log('Registering /api/residents/:residentId/feed');
 app.get('/api/residents/:residentId/feed', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
   try {
     const residentId = req.params.residentId;
@@ -956,6 +968,7 @@ app.get('/api/residents/:residentId/feed', requireRole(['facility_staff', 'syste
 });
 
 // Get resident calendar (visits and events)
+console.log('Registering /api/residents/:residentId/calendar');
 app.get('/api/residents/:residentId/calendar', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
   try {
     const residentId = req.params.residentId;
