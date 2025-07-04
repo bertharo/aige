@@ -402,7 +402,8 @@ export default function ResidentDetail({ token, role }) {
   if (!resident) return null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <>
+      <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="bg-white rounded-3xl shadow-lg p-8 mb-8">
           <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -1118,6 +1119,6 @@ export default function ResidentDetail({ token, role }) {
         </div>
       )}
       </div>
-    </div>
+    </>
   );
 } 
