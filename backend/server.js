@@ -112,8 +112,8 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
+  res.json({ 
+    status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'AIGE Backend API',
     environment: process.env.NODE_ENV || 'development',
@@ -329,12 +329,12 @@ app.post('/api/residents', requireRole(['family', 'system_admin']), async (req, 
   try {
     const { name, photo, room, carePlan, medicalInfo, facilityId, startDate, endDate } = req.body;
     const data = {
-      name,
-      photo,
-      room,
-      carePlan,
-      medicalInfo,
-      admittedAt: new Date()
+        name,
+        photo,
+        room,
+        carePlan,
+        medicalInfo,
+        admittedAt: new Date()
     };
     if (req.user.role === 'family') {
       data.family = { connect: { id: req.user.userId } };
@@ -865,6 +865,143 @@ app.get('/api/my-residents-test', (req, res) => {
 
 // Simple non-API test route for debugging
 app.get('/hello', (req, res) => res.send('Hello world!'));
+
+// Get resident documentation (care plans, medical info, etc.)
+app.get('/api/residents/:residentId/docs', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
+  try {
+    const residentId = req.params.residentId;
+    
+    // Family can only see docs for their associated residents
+    if (req.user.role === 'family') {
+      const resident = await prisma.resident.findUnique({
+        where: { id: residentId },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
+
+    const resident = await prisma.resident.findUnique({
+      where: { id: residentId },
+      select: {
+        id: true,
+        name: true,
+        carePlan: true,
+        medicalInfo: true,
+        room: true,
+        admittedAt: true,
+        dischargedAt: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!resident) {
+      return res.status(404).json({ success: false, message: 'Resident not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      docs: {
+        carePlan: resident.carePlan,
+        medicalInfo: resident.medicalInfo,
+        room: resident.room,
+        admittedAt: resident.admittedAt,
+        dischargedAt: resident.dischargedAt,
+        createdAt: resident.createdAt,
+        updatedAt: resident.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Get resident docs error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get resident daily feed (reports with images)
+app.get('/api/residents/:residentId/feed', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
+  try {
+    const residentId = req.params.residentId;
+    
+    // Family can only see feed for their associated residents
+    if (req.user.role === 'family') {
+      const resident = await prisma.resident.findUnique({
+        where: { id: residentId },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
+
+    const reports = await prisma.dailyReport.findMany({
+      where: { residentId },
+      orderBy: { date: 'desc' },
+      include: {
+        staff: {
+          select: { name: true, role: true }
+        },
+        images: {
+          select: { url: true, tag: true, date: true }
+        }
+      }
+    });
+
+    res.json({ success: true, feed: reports });
+  } catch (error) {
+    console.error('Get resident feed error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get resident calendar (visits and events)
+app.get('/api/residents/:residentId/calendar', requireRole(['facility_staff', 'system_admin', 'family']), async (req, res) => {
+  try {
+    const residentId = req.params.residentId;
+    
+    // Family can only see calendar for their associated residents
+    if (req.user.role === 'family') {
+      const resident = await prisma.resident.findUnique({
+        where: { id: residentId },
+        include: { family: { where: { id: req.user.userId } } }
+      });
+      if (!resident || resident.family.length === 0) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
+
+    const visits = await prisma.visit.findMany({
+      where: { residentId },
+      orderBy: { visitDate: 'asc' },
+      include: {
+        requestedBy: {
+          select: { name: true, role: true }
+        },
+        scheduledBy: {
+          select: { name: true, role: true }
+        }
+      }
+    });
+
+    // Transform visits into calendar events
+    const calendarEvents = visits.map(visit => ({
+      id: visit.id,
+      title: `Visit - ${visit.status}`,
+      date: visit.visitDate,
+      type: 'visit',
+      status: visit.status,
+      notes: visit.notes,
+      requestedBy: visit.requestedBy,
+      scheduledBy: visit.scheduledBy
+    }));
+
+    res.json({ success: true, calendar: calendarEvents });
+  } catch (error) {
+    console.error('Get resident calendar error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 // Start server (for Render deployment)
 app.listen(PORT, () => {
