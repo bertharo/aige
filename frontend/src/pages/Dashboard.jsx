@@ -15,12 +15,18 @@ export default function Dashboard({ user, token }) {
   const [facilityError, setFacilityError] = useState("");
   const [showFacilityModal, setShowFacilityModal] = useState(false);
   const [editingFacility, setEditingFacility] = useState(null);
-  const [facilityForm, setFacilityForm] = useState({ name: "", address: "", contactPerson: "", status: "ACTIVE" });
+  const [facilityForm, setFacilityForm] = useState({ name: "", address: "", contactPerson: "", capacity: "", status: "ACTIVE" });
   const [showFacilityResidents, setShowFacilityResidents] = useState(false);
   const [facilityResidents, setFacilityResidents] = useState([]);
   const [facilityResidentsLoading, setFacilityResidentsLoading] = useState(false);
   const [facilityResidentsError, setFacilityResidentsError] = useState("");
   const [selectedFacility, setSelectedFacility] = useState(null);
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [facilityStaff, setFacilityStaff] = useState([]);
+  const [availableStaff, setAvailableStaff] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffError, setStaffError] = useState("");
+  const [staffForm, setStaffForm] = useState({ staffId: "", role: "" });
   const navigate = useNavigate();
 
   // Move fetchResidents outside useEffect so it can be called after adding a resident
@@ -59,7 +65,27 @@ export default function Dashboard({ user, token }) {
           });
           if (!res.ok) throw new Error("Failed to fetch facilities");
           const data = await res.json();
-          setFacilities(data.facilities);
+          
+          // Fetch detailed information for each facility
+          const facilitiesWithDetails = await Promise.all(
+            data.facilities.map(async (facility) => {
+              try {
+                const detailRes = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${facility.id}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (detailRes.ok) {
+                  const detailData = await detailRes.json();
+                  return detailData.facility;
+                }
+                return facility;
+              } catch (err) {
+                console.error(`Failed to fetch details for facility ${facility.id}:`, err);
+                return facility;
+              }
+            })
+          );
+          
+          setFacilities(facilitiesWithDetails);
         } catch (err) {
           setFacilityError(err.message);
         } finally {
@@ -135,6 +161,7 @@ export default function Dashboard({ user, token }) {
       name: facility.name,
       address: facility.address,
       contactPerson: facility.contactPerson,
+      capacity: facility.capacity || "",
       status: facility.status
     });
     setShowFacilityModal(true);
@@ -202,6 +229,75 @@ export default function Dashboard({ user, token }) {
       setFacilityResidentsError(err.message);
     } finally {
       setFacilityResidentsLoading(false);
+    }
+  };
+
+  const handleManageStaff = async (facility) => {
+    setSelectedFacility(facility);
+    setShowStaffModal(true);
+    setStaffLoading(true);
+    setStaffError("");
+    
+    try {
+      // Fetch current staff
+      const staffRes = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${facility.id}/staff`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const staffData = await staffRes.json();
+      if (!staffRes.ok) throw new Error(staffData.message || "Failed to fetch staff");
+      setFacilityStaff(staffData.staff);
+      
+      // Fetch available staff
+      const availableRes = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/staff/available`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const availableData = await availableRes.json();
+      if (!availableRes.ok) throw new Error(availableData.message || "Failed to fetch available staff");
+      setAvailableStaff(availableData.staff);
+    } catch (err) {
+      setStaffError(err.message);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  const handleAssignStaff = async (e) => {
+    e.preventDefault();
+    setStaffError("");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${selectedFacility.id}/staff`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(staffForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to assign staff");
+      
+      // Refresh staff list
+      handleManageStaff(selectedFacility);
+      setStaffForm({ staffId: "", role: "" });
+    } catch (err) {
+      setStaffError(err.message);
+    }
+  };
+
+  const handleRemoveStaff = async (staffId) => {
+    setStaffError("");
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/facilities/${selectedFacility.id}/staff/${staffId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to remove staff");
+      
+      // Refresh staff list
+      handleManageStaff(selectedFacility);
+    } catch (err) {
+      setStaffError(err.message);
     }
   };
 
@@ -364,24 +460,74 @@ export default function Dashboard({ user, token }) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {facilities.map(facility => (
-                  <div key={facility.id} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => handleFacilityRowClick(facility)}>
+                  <div key={facility.id} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-2 bg-white rounded-xl shadow-sm">
                         <Building2 className="w-5 h-5 text-gray-600" />
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        facility.status === 'ACTIVE' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {facility.status}
-                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          className="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                          onClick={(e) => { e.stopPropagation(); handleEditFacility(facility); }}
+                          title="Edit Facility"
+                        >
+                          <Settings className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          facility.status === 'ACTIVE' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {facility.status}
+                        </span>
+                      </div>
                     </div>
                     <h3 className="font-bold text-gray-800 mb-2">{facility.name}</h3>
                     <p className="text-sm text-gray-600 mb-3">{facility.address}</p>
+                    
+                    {/* Capacity and Utilization */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Capacity:</span>
+                        <span className="font-semibold">{facility.capacity || 0} residents</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Current:</span>
+                        <span className="font-semibold">{facility.currentResidents || 0} residents</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Staff:</span>
+                        <span className="font-semibold">{facility.currentStaff || 0} assigned</span>
+                      </div>
+                      {facility.capacity > 0 && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.min((facility.currentResidents || 0) / facility.capacity * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Users className="w-4 h-4" />
                       <span>Contact: {facility.contactPerson}</span>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); handleFacilityRowClick(facility); }}
+                      >
+                        View Residents
+                      </button>
+                      <button
+                        className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); handleManageStaff(facility); }}
+                      >
+                        Manage Staff
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -534,6 +680,19 @@ export default function Dashboard({ user, token }) {
                   </div>
                   
                   <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Capacity (Max Residents)</label>
+                    <input
+                      type="number"
+                      name="capacity"
+                      min="0"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={facilityForm.capacity}
+                      onChange={handleFacilityFormChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                     <select
                       name="status"
@@ -618,6 +777,127 @@ export default function Dashboard({ user, token }) {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Management Modal */}
+        {showStaffModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 rounded-xl">
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800">
+                      Manage Staff - {selectedFacility?.name}
+                    </h3>
+                  </div>
+                  <button
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={() => setShowStaffModal(false)}
+                  >
+                    <Plus className="w-6 h-6 rotate-45 text-gray-400" />
+                  </button>
+                </div>
+                
+                {staffLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                  </div>
+                ) : staffError ? (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+                    <p className="text-red-700">{staffError}</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Assign New Staff */}
+                    <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+                      <h4 className="text-lg font-semibold text-gray-800 mb-4">Assign New Staff</h4>
+                      <form onSubmit={handleAssignStaff} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Staff Member</label>
+                          <select
+                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                            value={staffForm.staffId}
+                            onChange={e => setStaffForm({ ...staffForm, staffId: e.target.value })}
+                            required
+                          >
+                            <option value="">Select Staff Member</option>
+                            {availableStaff.map(staff => (
+                              <option key={staff.id} value={staff.id}>{staff.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                            value={staffForm.role}
+                            onChange={e => setStaffForm({ ...staffForm, role: e.target.value })}
+                            placeholder="e.g., Nurse, Caregiver"
+                            required
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <button
+                            type="submit"
+                            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                          >
+                            Assign Staff
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* Current Staff */}
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-800 mb-4">Current Staff ({facilityStaff.length})</h4>
+                      {facilityStaff.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <p className="text-gray-500">No staff currently assigned to this facility.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {facilityStaff.map(staff => (
+                            <div key={staff.id} className="bg-white border border-gray-200 rounded-2xl p-4">
+                              <div className="flex items-center gap-3 mb-3">
+                                <img 
+                                  src={staff.photo || "https://via.placeholder.com/40x40?text=Photo"} 
+                                  alt={staff.name} 
+                                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200" 
+                                />
+                                <div className="flex-1">
+                                  <div className="font-semibold text-gray-800">{staff.name}</div>
+                                  <div className="text-sm text-gray-500">{staff.email}</div>
+                                </div>
+                                <button
+                                  className="p-2 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                  onClick={() => handleRemoveStaff(staff.id)}
+                                  title="Remove Staff"
+                                >
+                                  <X className="w-4 h-4 text-red-600" />
+                                </button>
+                              </div>
+                              {staff.assignmentRole && (
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-medium">Role:</span> {staff.assignmentRole}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>

@@ -36,6 +36,7 @@ model User {
   requestedVisits Visit[] @relation("RequestedVisits")
   scheduledVisits Visit[] @relation("ScheduledVisits")
   notifications Notification[]
+  staffAssignments StaffFacilityAssignment[] @relation("StaffFacilityAssignments")
 }
 
 enum UserRole {
@@ -119,10 +120,12 @@ model Facility {
   name          String
   address       String
   contactPerson String
+  capacity      Int      @default(0)  // Maximum number of residents the facility can accommodate
   status        FacilityStatus @default(ACTIVE)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   assignments   ResidentFacilityAssignment[]
+  staffAssignments StaffFacilityAssignment[]
 }
 
 model ResidentFacilityAssignment {
@@ -178,4 +181,17 @@ model Notification {
   residentId  String?
   visitId     String?
   reportId    String?
+}
+
+model StaffFacilityAssignment {
+  id          String   @id @default(uuid())
+  staff       User     @relation("StaffFacilityAssignments", fields: [staffId], references: [id])
+  staffId     String
+  facility    Facility @relation(fields: [facilityId], references: [id])
+  facilityId  String
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  role        String?  // e.g., "Nurse", "Caregiver", "Manager"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

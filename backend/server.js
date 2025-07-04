@@ -1029,12 +1029,13 @@ app.get('/api/facilities', requireRole(['system_admin']), async (req, res) => {
 
 app.post('/api/facilities', requireRole(['system_admin']), async (req, res) => {
   try {
-    const { name, address, contactPerson, status } = req.body;
+    const { name, address, contactPerson, capacity, status } = req.body;
     const facility = await prisma.facility.create({
       data: {
         name,
         address,
         contactPerson,
+        capacity: parseInt(capacity) || 0,
         status: status || 'ACTIVE',
       }
     });
@@ -1047,10 +1048,16 @@ app.post('/api/facilities', requireRole(['system_admin']), async (req, res) => {
 
 app.put('/api/facilities/:id', requireRole(['system_admin']), async (req, res) => {
   try {
-    const { name, address, contactPerson, status } = req.body;
+    const { name, address, contactPerson, capacity, status } = req.body;
     const facility = await prisma.facility.update({
       where: { id: req.params.id },
-      data: { name, address, contactPerson, status }
+      data: { 
+        name, 
+        address, 
+        contactPerson, 
+        capacity: parseInt(capacity) || 0,
+        status 
+      }
     });
     res.json({ success: true, facility });
   } catch (error) {
@@ -1076,6 +1083,59 @@ app.patch('/api/facilities/:id/status', requireRole(['system_admin']), async (re
   }
 });
 
+// Get detailed facility information including capacity, current residents, and staff
+app.get('/api/facilities/:id', requireRole(['system_admin', 'facility_staff']), async (req, res) => {
+  try {
+    const facility = await prisma.facility.findUnique({
+      where: { id: req.params.id },
+      include: {
+        assignments: {
+          where: {
+            startDate: { lte: new Date() },
+            OR: [
+              { endDate: null },
+              { endDate: { gte: new Date() } }
+            ]
+          },
+          include: { resident: true }
+        },
+        staffAssignments: {
+          where: {
+            startDate: { lte: new Date() },
+            OR: [
+              { endDate: null },
+              { endDate: { gte: new Date() } }
+            ]
+          },
+          include: { staff: true }
+        }
+      }
+    });
+
+    if (!facility) {
+      return res.status(404).json({ success: false, message: 'Facility not found' });
+    }
+
+    const currentResidents = facility.assignments.length;
+    const currentStaff = facility.staffAssignments.length;
+    const utilization = facility.capacity > 0 ? Math.round((currentResidents / facility.capacity) * 100) : 0;
+
+    res.json({ 
+      success: true, 
+      facility: {
+        ...facility,
+        currentResidents,
+        currentStaff,
+        utilization,
+        availableCapacity: Math.max(0, facility.capacity - currentResidents)
+      }
+    });
+  } catch (error) {
+    console.error('Get facility details error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Get residents currently assigned to a facility
 app.get('/api/facilities/:id/residents', requireRole(['system_admin', 'family', 'facility_staff']), async (req, res) => {
   try {
@@ -1095,6 +1155,125 @@ app.get('/api/facilities/:id/residents', requireRole(['system_admin', 'family', 
     res.json({ success: true, residents });
   } catch (error) {
     console.error('Get facility residents error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get staff assigned to a facility
+app.get('/api/facilities/:id/staff', requireRole(['system_admin', 'facility_staff']), async (req, res) => {
+  try {
+    const today = new Date();
+    const staffAssignments = await prisma.staffFacilityAssignment.findMany({
+      where: {
+        facilityId: req.params.id,
+        startDate: { lte: today },
+        OR: [
+          { endDate: null },
+          { endDate: { gte: today } }
+        ]
+      },
+      include: { staff: true }
+    });
+    const staff = staffAssignments.map(a => ({
+      ...a.staff,
+      assignmentRole: a.role,
+      assignmentStartDate: a.startDate,
+      assignmentEndDate: a.endDate
+    }));
+    res.json({ success: true, staff });
+  } catch (error) {
+    console.error('Get facility staff error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Assign staff to facility
+app.post('/api/facilities/:id/staff', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const { staffId, role, endDate } = req.body;
+    
+    // Check if staff member exists and is facility_staff
+    const staff = await prisma.user.findUnique({
+      where: { id: staffId }
+    });
+    
+    if (!staff || staff.role !== 'facility_staff') {
+      return res.status(400).json({ success: false, message: 'Invalid staff member' });
+    }
+    
+    // Check if already assigned
+    const existingAssignment = await prisma.staffFacilityAssignment.findFirst({
+      where: {
+        staffId,
+        facilityId: req.params.id,
+        endDate: null
+      }
+    });
+    
+    if (existingAssignment) {
+      return res.status(400).json({ success: false, message: 'Staff member already assigned to this facility' });
+    }
+    
+    const assignment = await prisma.staffFacilityAssignment.create({
+      data: {
+        staffId,
+        facilityId: req.params.id,
+        role,
+        endDate: endDate ? new Date(endDate) : null
+      },
+      include: { staff: true }
+    });
+    
+    res.status(201).json({ success: true, assignment });
+  } catch (error) {
+    console.error('Assign staff error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Remove staff from facility
+app.delete('/api/facilities/:id/staff/:staffId', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const assignment = await prisma.staffFacilityAssignment.findFirst({
+      where: {
+        staffId: req.params.staffId,
+        facilityId: req.params.id,
+        endDate: null
+      }
+    });
+    
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Staff assignment not found' });
+    }
+    
+    await prisma.staffFacilityAssignment.update({
+      where: { id: assignment.id },
+      data: { endDate: new Date() }
+    });
+    
+    res.json({ success: true, message: 'Staff removed from facility' });
+  } catch (error) {
+    console.error('Remove staff error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get available staff for assignment
+app.get('/api/staff/available', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const staff = await prisma.user.findMany({
+      where: { role: 'facility_staff' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        photo: true
+      }
+    });
+    
+    res.json({ success: true, staff });
+  } catch (error) {
+    console.error('Get available staff error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
