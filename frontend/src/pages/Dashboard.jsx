@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusIcon } from "@heroicons/react/24/solid";
+import { Plus, Users, Building2, Calendar, MessageCircle, Activity, Heart, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ user, token }) {
@@ -24,25 +24,25 @@ export default function Dashboard({ user, token }) {
   const navigate = useNavigate();
 
   // Move fetchResidents outside useEffect so it can be called after adding a resident
-    const fetchResidents = async () => {
-      setLoading(true);
-      setError("");
-      try {
+  const fetchResidents = async () => {
+    setLoading(true);
+    setError("");
+    try {
       const endpoint = user.role === 'family'
         ? '/api/my-residents'
         : '/api/residents';
       const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error("Failed to fetch residents");
-        const data = await res.json();
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch residents");
+      const data = await res.json();
       setResidents(data.residents);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchResidents();
@@ -206,224 +206,236 @@ export default function Dashboard({ user, token }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-indigo-700">Your Loved Ones</h2>
-          <button
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
-            onClick={() => setShowAdd(true)}
-          >
-            <PlusIcon className="w-5 h-5" /> Add Resident
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                {user.role === 'family' ? 'Your Loved Ones' : 'Resident Management'}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {user.role === 'family' 
+                  ? 'Stay connected with your family members in care'
+                  : 'Manage residents and facilities'
+                }
+              </p>
+            </div>
+            <button
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              onClick={() => setShowAdd(true)}
+            >
+              <Plus className="w-5 h-5" />
+              <span className="hidden sm:inline">Add Resident</span>
+            </button>
+          </div>
         </div>
-        {loading ? (
-          <div className="text-center text-gray-500">Loading residents...</div>
-        ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {residents.map((r) => (
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <p className="text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Residents Grid */}
+        {!loading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {residents.map((resident) => (
               <div
-                key={r.id}
-                className="bg-white rounded-xl shadow p-4 flex flex-col items-center hover:shadow-lg transition cursor-pointer"
-                onClick={() => navigate(`/resident/${r.id}`)}
+                key={resident.id}
+                className="group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 cursor-pointer overflow-hidden"
+                onClick={() => navigate(`/resident/${resident.id}`)}
               >
-                <img
-                  src={r.photo}
-                  alt={r.name}
-                  className="w-20 h-20 rounded-full object-cover mb-3 border-2 border-indigo-200"
-                />
-                <div className="font-semibold text-lg text-gray-800">{r.name}</div>
-                <div className="text-sm text-gray-500">Room: {r.room}</div>
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Resident Photo */}
+                <div className="relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                  <img
+                    src={resident.photo || "https://via.placeholder.com/200x200?text=Photo"}
+                    alt={resident.name}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+
+                {/* Resident Info */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{resident.name}</h3>
+                  <div className="flex items-center gap-2 text-gray-600 mb-4">
+                    <Building2 className="w-4 h-4" />
+                    <span className="text-sm">Room {resident.room || 'TBD'}</span>
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <Activity className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="p-2 bg-green-50 rounded-lg">
+                        <MessageCircle className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div className="p-2 bg-purple-50 rounded-lg">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Click to view details
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Facility Management Section for System Admins */}
-        {user.role === 'system_admin' && (
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-indigo-700">Facility Management</h2>
-              <button
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-                onClick={handleAddFacility}
-              >
-                <PlusIcon className="w-5 h-5" /> Add Facility
-              </button>
+        {/* Empty State */}
+        {!loading && !error && residents.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Heart className="w-12 h-12 text-indigo-600" />
             </div>
-            {facilityLoading ? (
-              <div className="text-center text-gray-500">Loading facilities...</div>
-            ) : facilityError ? (
-              <div className="text-center text-red-500">{facilityError}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-xl shadow">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 text-left">Name</th>
-                      <th className="px-4 py-2 text-left">Address</th>
-                      <th className="px-4 py-2 text-left">Contact Person</th>
-                      <th className="px-4 py-2 text-left">Status</th>
-                      <th className="px-4 py-2 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {facilities.map(facility => (
-                      <tr key={facility.id} className="border-t cursor-pointer hover:bg-indigo-50" onClick={() => handleFacilityRowClick(facility)}>
-                        <td className="px-4 py-2">{facility.name}</td>
-                        <td className="px-4 py-2">{facility.address}</td>
-                        <td className="px-4 py-2">{facility.contactPerson}</td>
-                        <td className="px-4 py-2">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${facility.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{facility.status}</span>
-                        </td>
-                        <td className="px-4 py-2 flex gap-2" onClick={e => e.stopPropagation()}>
-                          <button
-                            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
-                            onClick={() => handleEditFacility(facility)}
-                          >Edit</button>
-                          {facility.status === 'ACTIVE' ? (
-                            <button
-                              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs"
-                              onClick={() => handleFacilityStatus(facility, 'INACTIVE')}
-                            >Deactivate</button>
-                          ) : (
-                            <button
-                              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs"
-                              onClick={() => handleFacilityStatus(facility, 'ACTIVE')}
-                            >Reactivate</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {/* Facility Modal */}
-            {showFacilityModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-                  <button
-                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
-                    onClick={() => setShowFacilityModal(false)}
-                    aria-label="Close"
-                  >
-                    &times;
-                  </button>
-                  <h3 className="text-xl font-bold text-indigo-700 mb-4">{editingFacility ? 'Edit Facility' : 'Add Facility'}</h3>
-                  <form onSubmit={handleFacilitySubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                      <input
-                        type="text"
-                        name="name"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                        value={facilityForm.name}
-                        onChange={handleFacilityFormChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                      <input
-                        type="text"
-                        name="address"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                        value={facilityForm.address}
-                        onChange={handleFacilityFormChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                      <input
-                        type="text"
-                        name="contactPerson"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                        value={facilityForm.contactPerson}
-                        onChange={handleFacilityFormChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                      <select
-                        name="status"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                        value={facilityForm.status}
-                        onChange={handleFacilityFormChange}
-                        required
-                      >
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                      </select>
-                    </div>
-                    {facilityError && <div className="text-red-500 text-sm text-center">{facilityError}</div>}
-                    <button
-                      type="submit"
-                      className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
-                    >
-                      {editingFacility ? 'Save Changes' : 'Add Facility'}
-                    </button>
-                  </form>
-                </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No residents yet</h3>
+            <p className="text-gray-600 mb-6">Add your first resident to get started</p>
+            <button
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => setShowAdd(true)}
+            >
+              <Plus className="w-5 h-5 inline mr-2" />
+              Add Resident
+            </button>
           </div>
         )}
-      </div>
+
+        {/* Facility Management Section for System Admins */}
+        {user.role === 'system_admin' && (
+          <div className="bg-white rounded-3xl shadow-lg p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl">
+                  <Building2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">Facility Management</h2>
+                  <p className="text-gray-600">Manage care facilities and assignments</p>
+                </div>
+              </div>
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={handleAddFacility}
+              >
+                <Plus className="w-5 h-5" />
+                Add Facility
+              </button>
+            </div>
+
+            {facilityLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+              </div>
+            ) : facilityError ? (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+                <p className="text-red-700">{facilityError}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {facilities.map(facility => (
+                  <div key={facility.id} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => handleFacilityRowClick(facility)}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-white rounded-xl shadow-sm">
+                        <Building2 className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        facility.status === 'ACTIVE' 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {facility.status}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-2">{facility.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{facility.address}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Users className="w-4 h-4" />
+                      <span>Contact: {facility.contactPerson}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
-      {/* Add Resident Modal */}
-      {showAdd && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
-              onClick={() => setShowAdd(false)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h3 className="text-xl font-bold text-indigo-700 mb-4">Add Resident</h3>
-            <form onSubmit={handleAddResident} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                  value={newResident.name}
-                  onChange={e => setNewResident({ ...newResident, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                  value={newResident.room}
-                  onChange={e => setNewResident({ ...newResident, room: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full"
-                  onChange={handlePhotoChange}
-                />
-                {photoPreview && (
-                  <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
-                )}
-              </div>
-                {(user.role === 'facility_staff' || user.role === 'system_admin') && (
-                  <>
+        {/* Add Resident Modal */}
+        {showAdd && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800">Add Resident</h3>
+                  <button
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={() => setShowAdd(false)}
+                  >
+                    <Plus className="w-6 h-6 rotate-45 text-gray-400" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleAddResident} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      value={newResident.name}
+                      onChange={e => setNewResident({ ...newResident, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Room Number</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      value={newResident.room}
+                      onChange={e => setNewResident({ ...newResident, room: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Photo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      onChange={handlePhotoChange}
+                    />
+                    {photoPreview && (
+                      <img src={photoPreview} alt="Preview" className="w-20 h-20 rounded-full mt-3 object-cover border-2 border-indigo-200" />
+                    )}
+                  </div>
+                  
+                  {(user.role === 'facility_staff' || user.role === 'system_admin') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Facility</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Facility</label>
                       <select
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                         value={newResident.facilityId}
                         onChange={e => setNewResident({ ...newResident, facilityId: e.target.value })}
                         required
@@ -434,72 +446,171 @@ export default function Dashboard({ user, token }) {
                         ))}
                       </select>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        <input
-                          type="date"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                          value={newResident.startDate}
-                          onChange={e => setNewResident({ ...newResident, startDate: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                        <input
-                          type="date"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                          value={newResident.endDate}
-                          onChange={e => setNewResident({ ...newResident, endDate: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              <button
-                type="submit"
-                className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
-                  disabled={uploading}
-              >
-                {uploading ? "Uploading..." : "Add Resident"}
-              </button>
-            </form>
+                  )}
+                  
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition-all"
+                      onClick={() => setShowAdd(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Adding...' : 'Add Resident'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Facility Modal */}
+        {showFacilityModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    {editingFacility ? 'Edit Facility' : 'Add Facility'}
+                  </h3>
+                  <button
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={() => setShowFacilityModal(false)}
+                  >
+                    <Plus className="w-6 h-6 rotate-45 text-gray-400" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleFacilitySubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={facilityForm.name}
+                      onChange={handleFacilityFormChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                    <input
+                      type="text"
+                      name="address"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={facilityForm.address}
+                      onChange={handleFacilityFormChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Person</label>
+                    <input
+                      type="text"
+                      name="contactPerson"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={facilityForm.contactPerson}
+                      onChange={handleFacilityFormChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select
+                      name="status"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={facilityForm.status}
+                      onChange={handleFacilityFormChange}
+                      required
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                    </select>
+                  </div>
+                  
+                  {facilityError && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                      <p className="text-red-700 text-sm">{facilityError}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition-all"
+                      onClick={() => setShowFacilityModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                    >
+                      {editingFacility ? 'Save Changes' : 'Add Facility'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Facility Residents Modal */}
         {showFacilityResidents && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
-                onClick={() => setShowFacilityResidents(false)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-              <h3 className="text-xl font-bold text-indigo-700 mb-4">Residents at {selectedFacility?.name}</h3>
-              {facilityResidentsLoading ? (
-                <div className="text-center text-gray-500">Loading residents...</div>
-              ) : facilityResidentsError ? (
-                <div className="text-center text-red-500">{facilityResidentsError}</div>
-              ) : facilityResidents.length === 0 ? (
-                <div className="text-center text-gray-500">No residents currently assigned.</div>
-              ) : (
-                <ul className="divide-y divide-gray-200">
-                  {facilityResidents.map(r => (
-                    <li key={r.id} className="py-2 flex items-center gap-3">
-                      <img src={r.photo} alt={r.name} className="w-10 h-10 rounded-full object-cover border" />
-                      <div>
-                        <div className="font-semibold text-gray-800">{r.name}</div>
-                        <div className="text-xs text-gray-500">Room: {r.room}</div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Residents at {selectedFacility?.name}
+                  </h3>
+                  <button
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={() => setShowFacilityResidents(false)}
+                  >
+                    <Plus className="w-6 h-6 rotate-45 text-gray-400" />
+                  </button>
+                </div>
+                
+                {facilityResidentsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                  </div>
+                ) : facilityResidentsError ? (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                    <p className="text-red-700">{facilityResidentsError}</p>
+                  </div>
+                ) : facilityResidents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500">No residents currently assigned.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {facilityResidents.map(r => (
+                      <div key={r.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <img src={r.photo || "https://via.placeholder.com/60x60?text=Photo"} alt={r.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-800">{r.name}</div>
+                          <div className="text-sm text-gray-500">Room {r.room || 'TBD'}</div>
+                        </div>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
