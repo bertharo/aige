@@ -188,7 +188,11 @@ export default function UserManagement({ user, token }) {
         const formData = new FormData();
         formData.append('name', userForm.name);
         formData.append('email', userForm.email);
-        formData.append('role', userForm.role);
+        
+        // Only system admins can change roles
+        if (user.role === 'system_admin') {
+          formData.append('role', userForm.role);
+        }
 
         if (userForm.newPassword) {
           formData.append('currentPassword', userForm.currentPassword);
