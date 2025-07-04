@@ -36,6 +36,9 @@ export default function ResidentDetail({ token, role }) {
   const [visitSubmitting, setVisitSubmitting] = useState(false);
   const [visitSubmitError, setVisitSubmitError] = useState('');
   const [selectedVisit, setSelectedVisit] = useState(null);
+  const [docs, setDocs] = useState(null);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState("");
 
   // Get current userId from token
   let userId = null;
@@ -55,12 +58,13 @@ export default function ResidentDetail({ token, role }) {
         if (!res1.ok) throw new Error(data1.message || "Failed to fetch resident");
         setResident(data1.resident);
 
-        const res2 = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/reports`, {
+        // Fetch feed data (reports) for the default tab
+        const res2 = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/feed`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data2 = await res2.json();
-        if (!res2.ok) throw new Error(data2.message || "Failed to fetch reports");
-        setReports(data2.reports);
+        if (!res2.ok) throw new Error(data2.message || "Failed to fetch feed");
+        setReports(data2.feed);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -92,26 +96,70 @@ export default function ResidentDetail({ token, role }) {
     fetchMessages();
   }, [id, token, tab]);
 
-  // Fetch visits for resident
+  // Fetch calendar data for resident
   useEffect(() => {
     if (tab !== 'calendar') return;
-    const fetchVisits = async () => {
+    const fetchCalendar = async () => {
       setVisitLoading(true);
       setVisitError("");
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/visits`, {
+        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/calendar`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to fetch visits");
-        setVisits(data.visits);
+        if (!res.ok) throw new Error(data.message || "Failed to fetch calendar");
+        setVisits(data.calendar);
       } catch (err) {
         setVisitError(err.message);
       } finally {
         setVisitLoading(false);
       }
     };
-    fetchVisits();
+    fetchCalendar();
+  }, [id, token, tab]);
+
+  // Fetch feed data when tab changes to feed
+  useEffect(() => {
+    if (tab !== 'feed') return;
+    const fetchFeed = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/feed`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to fetch feed");
+        setReports(data.feed);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeed();
+  }, [id, token, tab]);
+
+  // Fetch documentation for resident
+  useEffect(() => {
+    if (tab !== 'docs') return;
+    const fetchDocs = async () => {
+      setDocsLoading(true);
+      setDocsError("");
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}/api/residents/${id}/docs`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to fetch documentation");
+        setDocs(data.docs);
+      } catch (err) {
+        setDocsError(err.message);
+      } finally {
+        setDocsLoading(false);
+      }
+    };
+    fetchDocs();
   }, [id, token, tab]);
 
   // Handle form input
@@ -553,7 +601,86 @@ export default function ResidentDetail({ token, role }) {
         </div>
       )}
       {tab === "docs" && (
-        <div className="text-gray-400 text-center py-10">Documentation tab coming soon.</div>
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6 font-semibold text-lg text-indigo-700">Documentation</div>
+          {docsLoading ? (
+            <div className="text-gray-400 text-center py-10">Loading documentation...</div>
+          ) : docsError ? (
+            <div className="text-red-500 text-center py-10">{docsError}</div>
+          ) : docs ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Care Plan */}
+              <div className="bg-white rounded-xl shadow p-6">
+                <h3 className="text-lg font-semibold text-indigo-700 mb-4">Care Plan</h3>
+                {docs.carePlan ? (
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap">{docs.carePlan}</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">No care plan available</p>
+                )}
+              </div>
+
+              {/* Medical Information */}
+              <div className="bg-white rounded-xl shadow p-6">
+                <h3 className="text-lg font-semibold text-indigo-700 mb-4">Medical Information</h3>
+                {docs.medicalInfo ? (
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap">{docs.medicalInfo}</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">No medical information available</p>
+                )}
+              </div>
+
+              {/* Room Information */}
+              <div className="bg-white rounded-xl shadow p-6">
+                <h3 className="text-lg font-semibold text-indigo-700 mb-4">Room Information</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="font-medium text-gray-700">Room Number:</span>
+                    <span className="ml-2 text-gray-600">{docs.room || 'Not assigned'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Admitted:</span>
+                    <span className="ml-2 text-gray-600">
+                      {docs.admittedAt ? new Date(docs.admittedAt).toLocaleDateString() : 'Not specified'}
+                    </span>
+                  </div>
+                  {docs.dischargedAt && (
+                    <div>
+                      <span className="font-medium text-gray-700">Discharged:</span>
+                      <span className="ml-2 text-gray-600">
+                        {new Date(docs.dischargedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Important Dates */}
+              <div className="bg-white rounded-xl shadow p-6">
+                <h3 className="text-lg font-semibold text-indigo-700 mb-4">Important Dates</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="font-medium text-gray-700">Created:</span>
+                    <span className="ml-2 text-gray-600">
+                      {docs.createdAt ? new Date(docs.createdAt).toLocaleDateString() : 'Not specified'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Last Updated:</span>
+                    <span className="ml-2 text-gray-600">
+                      {docs.updatedAt ? new Date(docs.updatedAt).toLocaleDateString() : 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-gray-400 text-center py-10">No documentation available</div>
+          )}
+        </div>
       )}
     </div>
   );

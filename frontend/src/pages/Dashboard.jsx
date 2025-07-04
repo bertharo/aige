@@ -24,25 +24,25 @@ export default function Dashboard({ user, token }) {
   const navigate = useNavigate();
 
   // Move fetchResidents outside useEffect so it can be called after adding a resident
-  const fetchResidents = async () => {
-    setLoading(true);
-    setError("");
-    try {
+    const fetchResidents = async () => {
+      setLoading(true);
+      setError("");
+      try {
       const endpoint = user.role === 'family'
         ? '/api/my-residents'
         : '/api/residents';
       const res = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3000"}${endpoint}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Failed to fetch residents");
-      const data = await res.json();
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch residents");
+        const data = await res.json();
       setResidents(data.residents);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchResidents();
@@ -369,55 +369,55 @@ export default function Dashboard({ user, token }) {
                     </button>
                   </form>
                 </div>
-              </div>
-            )}
           </div>
         )}
+      </div>
+        )}
 
-        {/* Add Resident Modal */}
-        {showAdd && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
-                onClick={() => setShowAdd(false)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-              <h3 className="text-xl font-bold text-indigo-700 mb-4">Add Resident</h3>
-              <form onSubmit={handleAddResident} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                    value={newResident.name}
-                    onChange={e => setNewResident({ ...newResident, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-                    value={newResident.room}
-                    onChange={e => setNewResident({ ...newResident, room: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="w-full"
-                    onChange={handlePhotoChange}
-                  />
-                  {photoPreview && (
-                    <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
-                  )}
-                </div>
+      {/* Add Resident Modal */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowAdd(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h3 className="text-xl font-bold text-indigo-700 mb-4">Add Resident</h3>
+            <form onSubmit={handleAddResident} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                  value={newResident.name}
+                  onChange={e => setNewResident({ ...newResident, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                  value={newResident.room}
+                  onChange={e => setNewResident({ ...newResident, room: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full"
+                  onChange={handlePhotoChange}
+                />
+                {photoPreview && (
+                  <img src={photoPreview} alt="Preview" className="w-16 h-16 rounded-full mt-2 object-cover" />
+                )}
+              </div>
                 {(user.role === 'facility_staff' || user.role === 'system_admin') && (
                   <>
                     <div>
@@ -457,17 +457,17 @@ export default function Dashboard({ user, token }) {
                     </div>
                   </>
                 )}
-                <button
-                  type="submit"
-                  className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
+              <button
+                type="submit"
+                className="w-full py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition"
                   disabled={uploading}
-                >
-                  {uploading ? "Uploading..." : "Add Resident"}
-                </button>
-              </form>
-            </div>
+              >
+                {uploading ? "Uploading..." : "Add Resident"}
+              </button>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Facility Residents Modal */}
         {showFacilityResidents && (
