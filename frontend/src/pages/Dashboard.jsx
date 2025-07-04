@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Users, Building2, Calendar, MessageCircle, Activity, Heart, Settings } from "lucide-react";
+import { Plus, Users, Building2, Calendar, MessageCircle, Activity, Heart, Settings, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ user, token }) {
