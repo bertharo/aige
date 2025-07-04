@@ -222,13 +222,22 @@ export default function Dashboard({ user, token }) {
                 }
               </p>
             </div>
-            <button
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              onClick={() => setShowAdd(true)}
-            >
-              <Plus className="w-5 h-5" />
-              <span className="hidden sm:inline">Add Resident</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => setShowAdd(true)}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Add Resident</span>
+              </button>
+              <button
+                className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-2xl hover:bg-gray-200 transition-all duration-200"
+                onClick={() => navigate('/account')}
+              >
+                <Settings className="w-5 h-5" />
+                <span className="hidden sm:inline">Account</span>
+              </button>
+            </div>
           </div>
         </div>
 

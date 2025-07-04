@@ -347,21 +347,202 @@ app.post('/api/auth/login', validateLogin, async (req, res) => {
   }
 });
 
-// Protected route example
-app.get('/api/user/profile', authenticateToken, (req, res) => {
-  const user = users.find(user => user.id === req.user.userId);
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found'
+// Get current user profile
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
     });
-  }
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
-  const { password: _, ...userWithoutPassword } = user;
-  res.json({
-    success: true,
-    user: userWithoutPassword
-  });
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({
+      success: true,
+      user: userWithoutPassword
+    });
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update current user profile
+app.put('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, currentPassword, newPassword } = req.body;
+    
+    // Get current user
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Validate current password if changing password
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, message: 'Current password required' });
+      }
+      
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+      }
+    }
+    
+    // Check if email is already taken by another user
+    if (email && email !== user.email) {
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Email already in use' });
+      }
+    }
+    
+    // Update user
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (newPassword) updateData.password = await bcrypt.hash(newPassword, 10);
+    
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: updateData
+    });
+    
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    res.json({ success: true, user: userWithoutPassword });
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Delete current user account
+app.delete('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password required for account deletion' });
+    }
+    
+    // Get current user
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Validate password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ success: false, message: 'Password is incorrect' });
+    }
+    
+    // Delete user
+    await prisma.user.delete({
+      where: { id: req.user.userId }
+    });
+    
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Get all users (admin only)
+app.get('/api/users', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Update user (admin only)
+app.put('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
+  try {
+    const { name, email, role, newPassword } = req.body;
+    
+    // Check if email is already taken by another user
+    if (email) {
+      const existingUser = await prisma.user.findUnique({ 
+        where: { 
+          email,
+          NOT: { id: req.params.id }
+        }
+      });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Email already in use' });
+      }
+    }
+    
+    // Update user
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (newPassword) updateData.password = await bcrypt.hash(newPassword, 10);
+    
+    const updatedUser = await prisma.user.update({
+      where: { id: req.params.id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Delete user (admin only)
+app.delete('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
+  try {
+    // Prevent admin from deleting themselves
+    if (req.params.id === req.user.userId) {
+      return res.status(400).json({ success: false, message: 'Cannot delete your own account' });
+    }
+    
+    await prisma.user.delete({
+      where: { id: req.params.id }
+    });
+    
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // Resident Management Endpoints

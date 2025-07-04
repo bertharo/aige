@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ResidentDetail from "./pages/ResidentDetail";
+import UserManagement from "./pages/UserManagement";
 import { BellIcon } from '@heroicons/react/24/solid';
 import { ArrowLeft, Home, Users, LogOut, Menu, X } from "lucide-react";
 
@@ -239,6 +240,7 @@ function AppRoutes({ user, token, handleLogout, handleLogin }) {
         <Routes>
           <Route path="/" element={<Dashboard user={user} token={token} navigate={navigate} />} />
           <Route path="/resident/:id" element={<ResidentDetail token={token} role={user.role} />} />
+          <Route path="/account" element={<UserManagement user={user} token={token} />} />
         </Routes>
       </div>
     </div>
