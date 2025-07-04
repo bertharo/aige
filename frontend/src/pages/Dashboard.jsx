@@ -206,8 +206,7 @@ export default function Dashboard({ user, token }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
