@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -27,6 +29,13 @@ try {
   prisma = null;
 }
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 // Unique log line to confirm deployment
 console.log('🚦 TEST ROUTE REGISTERED: /api/test - Deployment check at', new Date().toISOString());
 
@@ -37,6 +46,37 @@ app.get('/api/test', (req, res) => {
     message: 'Test route is working! 🎉',
     timestamp: new Date().toISOString()
   });
+});
+
+// Cloudinary test route
+app.get('/api/test/cloudinary', async (req, res) => {
+  try {
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      return res.json({
+        success: false,
+        message: 'Cloudinary not configured - missing environment variables',
+        configured: false
+      });
+    }
+    
+    // Test Cloudinary connection by getting account info
+    const result = await cloudinary.api.ping();
+    res.json({
+      success: true,
+      message: 'Cloudinary connection successful! ☁️',
+      configured: true,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: 'Cloudinary connection failed',
+      error: error.message,
+      configured: true,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Middleware
@@ -88,17 +128,18 @@ function requireRole(roles) {
   };
 }
 
-// Multer setup for image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'public', 'uploads'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname.replace(/\s+/g, '_'));
+// Cloudinary storage configuration
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'elderly-care',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }]
   }
 });
-const upload = multer({ storage });
+
+// Multer setup for image uploads
+const upload = multer({ storage: cloudinaryStorage });
 
 // Routes
 app.get('/', (req, res) => {
@@ -606,7 +647,8 @@ app.post('/api/images/upload', authenticateToken, upload.array('images', 10), as
       return res.status(400).json({ success: false, message: 'No files uploaded' });
     }
     const images = await Promise.all(req.files.map(async (file) => {
-      const url = `/uploads/${file.filename}`;
+      // Cloudinary provides the URL in file.path
+      const url = file.path;
       const image = await prisma.image.create({
         data: {
           url,

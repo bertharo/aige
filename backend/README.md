@@ -147,6 +147,9 @@ Health check endpoint.
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment mode | `development` |
 | `JWT_SECRET` | JWT signing secret | `your-secret-key` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | - |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | - |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | - |
 
 ## Project Structure
 
@@ -181,14 +184,49 @@ backend/
 - **Security Headers**: Helmet middleware for security headers
 - **CORS**: Configurable cross-origin resource sharing
 
+## Cloudinary Setup
+
+This application uses Cloudinary for image storage and management. Images are automatically optimized and served via CDN.
+
+### Setup Steps
+
+1. **Create a Cloudinary account** (if you don't have one):
+   - Go to [cloudinary.com](https://cloudinary.com)
+   - Sign up for a free account
+
+2. **Get your credentials**:
+   - Log into your Cloudinary dashboard
+   - Go to Settings → Access Keys
+   - Copy your Cloud Name, API Key, and API Secret
+
+3. **Configure environment variables**:
+   ```bash
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+4. **Test the connection**:
+   ```bash
+   curl http://localhost:3000/api/test/cloudinary
+   ```
+
+### Features
+
+- **Automatic optimization**: Images are resized to max 800x800px
+- **Multiple formats**: Supports JPG, PNG, GIF, WebP
+- **Organized storage**: Images are stored in the `elderly-care` folder
+- **CDN delivery**: Fast global image delivery
+
 ## Production Deployment
 
 ### Environment Setup
 1. Set `NODE_ENV=production`
 2. Use a strong `JWT_SECRET`
 3. Configure proper CORS settings
-4. Set up a reverse proxy (nginx)
-5. Use PM2 or similar for process management
+4. Set up Cloudinary credentials
+5. Set up a reverse proxy (nginx)
+6. Use PM2 or similar for process management
 
 ### Database Integration
 Currently using in-memory storage. For production:
