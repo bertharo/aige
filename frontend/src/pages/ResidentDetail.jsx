@@ -433,29 +433,29 @@ export default function ResidentDetail({ token, role }) {
               </div>
             </div>
           </div>
-        </div>
-              {/* Tabs */}
+      </div>
+      {/* Tabs */}
         <div className="bg-white rounded-3xl shadow-lg p-2 mb-8">
           <div className="flex gap-2">
             {TABS.map(t => {
               const IconComponent = t.icon;
               return (
-                <button
-                  key={t.key}
+          <button
+            key={t.key}
                   className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all duration-300 ${
                     tab === t.key 
                       ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg" 
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
-                  onClick={() => setTab(t.key)}
-                >
+            onClick={() => setTab(t.key)}
+          >
                   <IconComponent className="w-5 h-5" />
                   <span className="hidden sm:inline">{t.label}</span>
-                </button>
+          </button>
               );
             })}
           </div>
-        </div>
+      </div>
       {/* Tab Content */}
       {tab === "feed" && (
         <div className="bg-white rounded-3xl shadow-lg p-8">
@@ -578,8 +578,8 @@ export default function ResidentDetail({ token, role }) {
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100 rounded-xl">
                         <Clock className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
+                </div>
+                  <div>
                         <div className="font-semibold text-gray-800">{new Date(report.date).toLocaleDateString()}</div>
                         <div className="text-sm text-gray-500">By: {report.staff?.name || "Staff"}</div>
                       </div>
@@ -612,9 +612,9 @@ export default function ResidentDetail({ token, role }) {
                       )}
                     </div>
                     
-                    {report.images && report.images.length > 0 && (
+                  {report.images && report.images.length > 0 && (
                       <div className="grid grid-cols-2 gap-3">
-                        {report.images.map(img => (
+                      {report.images.map(img => (
                           <div key={img.id} className="relative group">
                             <img 
                               src={img.url} 
@@ -623,11 +623,11 @@ export default function ResidentDetail({ token, role }) {
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-xl transition-all duration-300"></div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              </div>
               ))}
             </div>
           )}
@@ -1118,7 +1118,7 @@ export default function ResidentDetail({ token, role }) {
           )}
         </div>
       )}
-      </div>
+    </div>
     </>
   );
 } 

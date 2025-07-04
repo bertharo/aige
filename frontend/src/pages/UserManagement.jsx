@@ -42,14 +42,16 @@ export default function UserManagement({ user, token }) {
     name: '',
     email: '',
     role: 'family',
-    newPassword: ''
+    newPassword: '',
+    currentPassword: ''
   });
 
   const [deletePassword, setDeletePassword] = useState('');
 
   useEffect(() => {
     fetchProfile();
-    if (user.role === 'system_admin') {
+    // Allow system admins and facility staff to see users
+    if (user.role === 'system_admin' || user.role === 'facility_staff') {
       fetchAllUsers();
     }
   }, [user.role]);
@@ -225,7 +227,8 @@ export default function UserManagement({ user, token }) {
       name: user.name,
       email: user.email,
       role: user.role,
-      newPassword: ''
+      newPassword: '',
+      currentPassword: ''
     });
     setShowUserModal(true);
   };
@@ -340,8 +343,8 @@ export default function UserManagement({ user, token }) {
             )}
           </div>
 
-          {/* User Management Section (Admin Only) */}
-          {user.role === 'system_admin' && (
+          {/* User Management Section (Admin and Staff) */}
+          {(user.role === 'system_admin' || user.role === 'facility_staff') && (
             <div className="bg-white rounded-3xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -350,58 +353,83 @@ export default function UserManagement({ user, token }) {
                   </div>
                   <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingUser(null);
-                    setUserForm({ name: '', email: '', role: 'family', newPassword: '' });
-                    setShowUserModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add User
-                </button>
+                {user.role === 'system_admin' && (
+                  <button
+                    onClick={() => {
+                      setEditingUser(null);
+                      setUserForm({ name: '', email: '', role: 'family', newPassword: '', currentPassword: '' });
+                      setShowUserModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add User
+                  </button>
+                )}
               </div>
 
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {allUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 rounded-xl">
-                          <User className="w-4 h-4 text-indigo-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">{user.name}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
-                          <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                            user.role === 'system_admin' ? 'bg-purple-100 text-purple-700' :
-                            user.role === 'facility_staff' ? 'bg-blue-100 text-blue-700' :
-                            'bg-green-100 text-green-700'
-                          }`}>
-                            {user.role.replace('_', ' ')}
-                          </span>
+                {allUsers.map(listedUser => {
+                  // Determine what actions the current user can perform on this user
+                  const canEdit = 
+                    listedUser.id === profile?.id || 
+                    user.role === 'system_admin' ||
+                    (user.role === 'facility_staff' && listedUser.role === 'family');
+                  
+                  const canDelete = 
+                    listedUser.id !== profile?.id && (
+                      user.role === 'system_admin' ||
+                      (user.role === 'facility_staff' && listedUser.role === 'family')
+                    );
+                  
+                  return (
+                    <div key={listedUser.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-100 rounded-xl">
+                            <User className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{listedUser.name}</p>
+                            <p className="text-sm text-gray-500">{listedUser.email}</p>
+                            <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                              listedUser.role === 'system_admin' ? 'bg-purple-100 text-purple-700' :
+                              listedUser.role === 'facility_staff' ? 'bg-blue-100 text-blue-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {listedUser.role.replace('_', ' ')}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        {canEdit && (
+                          <button
+                            onClick={() => openEditUser(listedUser)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                            title="Edit user"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleUserDelete(listedUser.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                            title="Delete user"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {!canEdit && !canDelete && (
+                          <span className="text-xs text-gray-400 px-2 py-1">
+                            View only
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditUser(user)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {user.id !== profile?.id && (
-                        <button
-                          onClick={() => handleUserDelete(user.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -612,30 +640,53 @@ export default function UserManagement({ user, token }) {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
-                  <select
-                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                    value={userForm.role}
-                    onChange={e => setUserForm({ ...userForm, role: e.target.value })}
-                    required
-                  >
-                    <option value="family">Family Member</option>
-                    <option value="facility_staff">Facility Staff</option>
-                    <option value="system_admin">System Admin</option>
-                  </select>
-                </div>
+                {/* Only system admins can change roles */}
+                {user.role === 'system_admin' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <select
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={userForm.role}
+                      onChange={e => setUserForm({ ...userForm, role: e.target.value })}
+                      required
+                    >
+                      <option value="family">Family Member</option>
+                      <option value="facility_staff">Facility Staff</option>
+                      <option value="system_admin">System Admin</option>
+                    </select>
+                  </div>
+                )}
                 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">New Password (optional)</label>
-                  <input
-                    type="password"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                    value={userForm.newPassword}
-                    onChange={e => setUserForm({ ...userForm, newPassword: e.target.value })}
-                    placeholder="Leave blank to keep current password"
-                  />
-                </div>
+                {/* Password field - only for system admins or when editing own profile */}
+                {(user.role === 'system_admin' || (editingUser && editingUser.id === profile?.id)) && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {user.role === 'system_admin' ? 'New Password (optional)' : 'New Password (optional)'}
+                    </label>
+                    <input
+                      type="password"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={userForm.newPassword}
+                      onChange={e => setUserForm({ ...userForm, newPassword: e.target.value })}
+                      placeholder={user.role === 'system_admin' ? 'Leave blank to keep current password' : 'Leave blank to keep current password'}
+                    />
+                  </div>
+                )}
+                
+                {/* Show current password field for users editing their own profile */}
+                {editingUser && editingUser.id === profile?.id && userForm.newPassword && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                    <input
+                      type="password"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      value={userForm.currentPassword || ''}
+                      onChange={e => setUserForm({ ...userForm, currentPassword: e.target.value })}
+                      placeholder="Enter current password to change password"
+                      required
+                    />
+                  </div>
+                )}
                 
                 <div className="flex gap-3 pt-4">
                   <button

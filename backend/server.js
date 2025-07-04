@@ -128,6 +128,19 @@ function requireRole(roles) {
   };
 }
 
+// Helper function to check if a user is a family member
+async function isFamilyMember(userId) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    return user && user.role === 'family';
+  } catch (error) {
+    console.error('Error checking if user is family member:', error);
+    return false;
+  }
+}
+
 // Cloudinary storage configuration
 const cloudinaryStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -354,18 +367,18 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
       where: { id: req.user.userId }
     });
     
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const { password: _, ...userWithoutPassword } = user;
-    res.json({
-      success: true,
-      user: userWithoutPassword
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
     });
+  }
+
+  const { password: _, ...userWithoutPassword } = user;
+  res.json({
+    success: true,
+    user: userWithoutPassword
+  });
   } catch (error) {
     console.error('Get user profile error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -461,19 +474,52 @@ app.delete('/api/user/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all users (admin only)
-app.get('/api/users', requireRole(['system_admin']), async (req, res) => {
+// Get all users (admin and staff can see family members)
+app.get('/api/users', authenticateToken, async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
+    const currentUser = req.user;
+    
+    let users;
+    if (currentUser.role === 'system_admin') {
+      // Admins can see all users
+      users = await prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+    } else if (currentUser.role === 'facility_staff') {
+      // Staff can only see family members
+      users = await prisma.user.findMany({
+        where: { role: 'family' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+    } else {
+      // Family members can only see themselves
+      users = await prisma.user.findMany({
+        where: { id: currentUser.userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+    }
+    
     res.json({ success: true, users });
   } catch (error) {
     console.error('Get users error:', error);
@@ -481,17 +527,81 @@ app.get('/api/users', requireRole(['system_admin']), async (req, res) => {
   }
 });
 
-// Update user (admin only)
-app.put('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
+// Update user (admin, staff, or self)
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
   try {
-    const { name, email, role, newPassword } = req.body;
+    const { name, email, role, newPassword, currentPassword } = req.body;
+    const targetUserId = req.params.id;
+    const currentUser = req.user;
+    
+    // Permission checks:
+    // 1. Users can always edit their own profile
+    // 2. System admins can edit any user
+    // 3. Facility staff can edit family members
+    const canEdit = 
+      targetUserId === currentUser.userId || 
+      currentUser.role === 'system_admin' ||
+      (currentUser.role === 'facility_staff' && await isFamilyMember(targetUserId));
+    
+    if (!canEdit) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You do not have permission to edit this user' 
+      });
+    }
+    
+    // Get target user
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId }
+    });
+    
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Role restrictions:
+    // - Only system admins can change roles
+    // - Only system admins can change passwords for other users
+    // - Users can change their own password with current password
+    if (role && currentUser.role !== 'system_admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only system admins can change user roles' 
+      });
+    }
+    
+    if (newPassword) {
+      if (targetUserId === currentUser.userId) {
+        // User changing their own password
+        if (!currentPassword) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Current password required to change password' 
+          });
+        }
+        
+        const isValidPassword = await bcrypt.compare(currentPassword, targetUser.password);
+        if (!isValidPassword) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Current password is incorrect' 
+          });
+        }
+      } else if (currentUser.role !== 'system_admin') {
+        // Non-admin trying to change someone else's password
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Only system admins can change other users\' passwords' 
+        });
+      }
+    }
     
     // Check if email is already taken by another user
-    if (email) {
+    if (email && email !== targetUser.email) {
       const existingUser = await prisma.user.findUnique({ 
         where: { 
           email,
-          NOT: { id: req.params.id }
+          NOT: { id: targetUserId }
         }
       });
       if (existingUser) {
@@ -503,11 +613,11 @@ app.put('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
     const updateData = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
-    if (role) updateData.role = role;
+    if (role && currentUser.role === 'system_admin') updateData.role = role;
     if (newPassword) updateData.password = await bcrypt.hash(newPassword, 10);
     
     const updatedUser = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: targetUserId },
       data: updateData,
       select: {
         id: true,
@@ -526,16 +636,65 @@ app.put('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
   }
 });
 
-// Delete user (admin only)
-app.delete('/api/users/:id', requireRole(['system_admin']), async (req, res) => {
+// Delete user (admin, staff, or self)
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
   try {
-    // Prevent admin from deleting themselves
-    if (req.params.id === req.user.userId) {
-      return res.status(400).json({ success: false, message: 'Cannot delete your own account' });
+    const targetUserId = req.params.id;
+    const currentUser = req.user;
+    
+    // Permission checks:
+    // 1. Users can delete their own account
+    // 2. System admins can delete any user
+    // 3. Facility staff can delete family members
+    const canDelete = 
+      targetUserId === currentUser.userId || 
+      currentUser.role === 'system_admin' ||
+      (currentUser.role === 'facility_staff' && await isFamilyMember(targetUserId));
+    
+    if (!canDelete) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You do not have permission to delete this user' 
+      });
+    }
+    
+    // Get target user
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId }
+    });
+    
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Additional restrictions:
+    // - Users must provide password to delete their own account
+    // - Staff cannot delete other staff or admins
+    if (targetUserId === currentUser.userId) {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Password required to delete your own account' 
+        });
+      }
+      
+      const isValidPassword = await bcrypt.compare(password, targetUser.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Password is incorrect' 
+        });
+      }
+    } else if (currentUser.role === 'facility_staff' && targetUser.role !== 'family') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Staff can only delete family member accounts' 
+      });
     }
     
     await prisma.user.delete({
-      where: { id: req.params.id }
+      where: { id: targetUserId }
     });
     
     res.json({ success: true, message: 'User deleted successfully' });
