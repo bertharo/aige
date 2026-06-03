@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LanguageProvider } from './i18n/LanguageContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -13,7 +13,10 @@ const STORAGE_KEY = 'kinness_session';
 function loadSession() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.user?.id || !parsed?.token) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -33,97 +36,112 @@ function ProtectedRoute({ session, allowedRole, children }) {
   return children;
 }
 
-function App() {
+function AppRoutes() {
+  const navigate = useNavigate();
   const [session, setSession] = useState(loadSession);
   const [showRegister, setShowRegister] = useState(false);
 
-  const handleAuth = (user, token, redirect) => {
-    const next = { user, token };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setSession(next);
-    window.location.href = redirect || roleHome(user.role);
-  };
+  const handleAuth = useCallback(
+    (user, token, redirect) => {
+      if (!user?.id || !token) {
+        return;
+      }
+      const next = { user, token };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      setSession(next);
+      navigate(redirect || roleHome(user.role), { replace: true });
+    },
+    [navigate]
+  );
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setSession(null);
-  };
+    navigate('/login', { replace: true });
+  }, [navigate]);
 
   const user = session?.user;
   const token = session?.token;
 
+  if (!user) {
+    return (
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <Login
+              onLogin={handleAuth}
+              onSwitchToRegister={() => {
+                setShowRegister(true);
+                navigate('/register');
+              }}
+            />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <Register
+              onRegister={handleAuth}
+              onSwitchToLogin={() => {
+                setShowRegister(false);
+                navigate('/login');
+              }}
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            showRegister ? (
+              <Navigate to="/register" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+      </Routes>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/staff/post"
+        element={
+          <ProtectedRoute session={session} allowedRole="staff">
+            <StaffPost user={user} token={token} onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/family/feed"
+        element={
+          <ProtectedRoute session={session} allowedRole="family">
+            <FamilyFeed user={user} token={token} onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute session={session} allowedRole="admin">
+            <AdminPanel user={user} token={token} onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/login" element={<Navigate to={roleHome(user.role)} replace />} />
+      <Route path="*" element={<Navigate to={roleHome(user.role)} replace />} />
+    </Routes>
+  );
+}
+
+function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
         <InstallPrompt />
-        <Routes>
-          {!user ? (
-            <>
-              <Route
-                path="/login"
-                element={
-                  <Login
-                    onLogin={handleAuth}
-                    onSwitchToRegister={() => setShowRegister(true)}
-                  />
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <Register
-                    onRegister={handleAuth}
-                    onSwitchToLogin={() => {
-                      setShowRegister(false);
-                      window.location.href = '/login';
-                    }}
-                  />
-                }
-              />
-              <Route
-                path="*"
-                element={
-                  showRegister ? (
-                    <Navigate to="/register" />
-                  ) : (
-                    <Login
-                      onLogin={handleAuth}
-                      onSwitchToRegister={() => setShowRegister(true)}
-                    />
-                  )
-                }
-              />
-            </>
-          ) : (
-            <>
-              <Route
-                path="/staff/post"
-                element={
-                  <ProtectedRoute session={session} allowedRole="staff">
-                    <StaffPost user={user} token={token} onLogout={handleLogout} />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/family/feed"
-                element={
-                  <ProtectedRoute session={session} allowedRole="family">
-                    <FamilyFeed user={user} token={token} onLogout={handleLogout} />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute session={session} allowedRole="admin">
-                    <AdminPanel user={user} token={token} onLogout={handleLogout} />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to={roleHome(user.role)} replace />} />
-            </>
-          )}
-        </Routes>
+        <AppRoutes />
       </BrowserRouter>
     </LanguageProvider>
   );

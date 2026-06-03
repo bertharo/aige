@@ -11,7 +11,7 @@ import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { StaleWhileRevalidate } from 'workbox-strategies';
+import { StaleWhileRevalidate, NetworkOnly } from 'workbox-strategies';
 
 clientsClaim();
 
@@ -68,6 +68,9 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Never cache auth or API mutations — avoids login hanging on stale SW responses
+registerRoute(({ url }) => url.pathname.startsWith('/api/'), new NetworkOnly());
 
 // Cache family feed API when same-origin (e.g. proxied in dev)
 registerRoute(

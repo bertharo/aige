@@ -21,6 +21,9 @@ export default function Register({ onRegister, onSwitchToLogin }) {
         method: 'POST',
         body: { name, email, password, facilityCode },
       });
+      if (!data.success || !data.token || !data.user) {
+        throw new Error(data.message || t('registerError'));
+      }
       onRegister(data.user, data.token, data.redirect);
     } catch (err) {
       setError(err.message || t('registerError'));

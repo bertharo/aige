@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "postinstall": "npm rebuild better-sqlite3 2>/dev/null || true",
     "seed:staff": "node scripts/seedStaff.js",
     "seed:family": "node scripts/seedFamily.js"
   },

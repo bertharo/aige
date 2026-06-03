@@ -3,11 +3,18 @@ const path = require('path');
 const fs = require('fs');
 const { randomUUID } = require('crypto');
 
-const dataDir = path.join(__dirname, 'data');
+// Render: attach a disk and set DATA_DIR=/var/data for persistence across deploys
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'kinness.db');
-const db = new Database(dbPath);
+let db;
+try {
+  db = new Database(dbPath);
+} catch (err) {
+  console.error('Failed to open SQLite database at', dbPath, err);
+  throw err;
+}
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 

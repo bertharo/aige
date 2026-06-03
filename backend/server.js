@@ -40,7 +40,7 @@ const upload = multer({
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin(origin, callback) {
-    const allowed = [FRONTEND_URL, 'http://localhost:3000', 'http://localhost:3001'];
+    const allowed = [FRONTEND_URL, 'http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'];
     if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
       callback(null, true);
     } else {
@@ -115,7 +115,20 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'OK', service: 'Kinness Backend', timestamp: new Date().toISOString() });
+  let dbOk = false;
+  try {
+    db.prepare('SELECT 1').get();
+    dbOk = true;
+  } catch (e) {
+    console.error('Health db check failed:', e);
+  }
+  res.json({
+    status: dbOk ? 'OK' : 'DEGRADED',
+    service: 'Kinness Backend',
+    version: '2.0.0',
+    database: dbOk ? 'sqlite' : 'error',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ——— Auth ———
@@ -215,7 +228,11 @@ app.post('/api/auth/login', [
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ success: false, message: 'Could not sign in — please try again' });
+    res.status(500).json({
+      success: false,
+      message: 'Could not sign in — please try again',
+      ...(process.env.NODE_ENV !== 'production' && { detail: err.message }),
+    });
   }
 });
 

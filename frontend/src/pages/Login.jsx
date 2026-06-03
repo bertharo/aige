@@ -19,6 +19,9 @@ export default function Login({ onLogin, onSwitchToRegister }) {
         method: 'POST',
         body: { email, password },
       });
+      if (!data.success || !data.token || !data.user) {
+        throw new Error(data.message || t('loginError'));
+      }
       onLogin(data.user, data.token, data.redirect);
     } catch (err) {
       setError(err.message || t('loginError'));

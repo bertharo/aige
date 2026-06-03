@@ -1,0 +1,25 @@
+# Render Blueprint — Kinness API
+# Dashboard: New Web Service → Connect bertharo/aige → Render detects this file
+# Or: existing aige-backend → Manual Deploy → Clear build cache → Deploy latest main
+
+services:
+  - type: web
+    name: aige-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FACILITY_CODE
+        value: KINNESS2024
+      - key: FRONTEND_URL
+        value: https://aige.vercel.app
+      - key: ADMIN_SEED_EMAIL
+        value: admin@kinness.app
+      - key: ADMIN_SEED_PASSWORD
+        value: admin12345
