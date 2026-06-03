@@ -402,28 +402,48 @@ app.post('/api/family/feed/read', authenticateToken, requireRole('family'), (req
 // ——— Admin ———
 
 app.get('/api/admin/dashboard', authenticateToken, requireRole('admin'), (req, res) => {
-  const facilityId = req.user.facilityId;
-  const facility = db.prepare('SELECT * FROM facilities WHERE id = ?').get(facilityId);
-  const residentCount = db.prepare('SELECT COUNT(*) as c FROM residents WHERE facility_id = ?').get(facilityId).c;
-  const familyCount = db.prepare(`
-    SELECT COUNT(DISTINCT fm.user_id) as c FROM family_members fm
-    JOIN residents r ON r.id = fm.resident_id WHERE r.facility_id = ?
-  `).get(facilityId).c;
-  const today = new Date().toISOString().slice(0, 10);
-  const updatesToday = db.prepare(`
-    SELECT COUNT(*) as c FROM updates WHERE facility_id = ? AND date(created_at) = date(?)
-  `).get(facilityId, today).c;
+  try {
+    const facilityId = req.user.facilityId;
+    if (!facilityId) {
+      return res.status(403).json({ success: false, message: 'No facility linked to this account' });
+    }
+    const facility = db.prepare('SELECT * FROM facilities WHERE id = ?').get(facilityId);
+    if (!facility) {
+      return res.json({
+        success: true,
+        dashboard: {
+          facilityName: '',
+          facilityCode: '',
+          residentCount: 0,
+          familyCount: 0,
+          updatesToday: 0,
+        },
+      });
+    }
+    const residentCount = db.prepare('SELECT COUNT(*) as c FROM residents WHERE facility_id = ?').get(facilityId).c;
+    const familyCount = db.prepare(`
+      SELECT COUNT(DISTINCT fm.user_id) as c FROM family_members fm
+      JOIN residents r ON r.id = fm.resident_id WHERE r.facility_id = ?
+    `).get(facilityId).c;
+    const today = new Date().toISOString().slice(0, 10);
+    const updatesToday = db.prepare(`
+      SELECT COUNT(*) as c FROM updates WHERE facility_id = ? AND date(created_at) = date(?)
+    `).get(facilityId, today).c;
 
-  res.json({
-    success: true,
-    dashboard: {
-      facilityName: facility.name,
-      facilityCode: facility.facility_code,
-      residentCount,
-      familyCount,
-      updatesToday,
-    },
-  });
+    res.json({
+      success: true,
+      dashboard: {
+        facilityName: facility.name,
+        facilityCode: facility.facility_code,
+        residentCount,
+        familyCount,
+        updatesToday,
+      },
+    });
+  } catch (err) {
+    console.error('Dashboard error:', err);
+    res.status(500).json({ success: false, message: 'Could not load dashboard' });
+  }
 });
 
 app.get('/api/admin/residents', authenticateToken, requireRole('admin'), (req, res) => {

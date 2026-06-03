@@ -21,3 +21,39 @@ select,
 textarea {
   font-size: 16px;
 }
+
+/* Admin panel — underline tabs only */
+.admin-tabs {
+  display: flex;
+  overflow-x: auto;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 0;
+}
+
+.admin-tabs .tab {
+  font-size: 13px;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #6b6b6b;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  min-height: 44px;
+  font-family: inherit;
+}
+
+.admin-tabs .tab.active {
+  color: #2d6a4f;
+  border-bottom: 2px solid #2d6a4f;
+  font-weight: 500;
+  background: transparent;
+}
+
+.admin-tabs .tab:focus-visible {
+  outline: 2px solid #2d6a4f;
+  outline-offset: 2px;
+}

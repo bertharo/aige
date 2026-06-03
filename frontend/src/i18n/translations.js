@@ -70,6 +70,8 @@ export const translations = {
     noResidents: 'No residents yet — add your first resident',
     noStaff: 'No staff yet',
     photoOptional: 'Photo (optional)',
+    dashboardSettingUp: 'Setting up your dashboard…',
+    dashboardEmptyHint: 'Add your first resident to get started',
   },
   zh: {
     appName: 'Kinness',
@@ -142,6 +144,8 @@ export const translations = {
     noResidents: '暂无住户 — 请添加第一位住户',
     noStaff: '暂无员工',
     photoOptional: '照片（可选）',
+    dashboardSettingUp: '正在设置您的面板…',
+    dashboardEmptyHint: '添加第一位住户即可开始',
   },
 };
 
