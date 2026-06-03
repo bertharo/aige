@@ -11,13 +11,23 @@ kinness/
 └── README.md
 ```
 
-## Demo seed accounts
+## Demo seed (Sunrise Gardens)
 
 ```bash
 cd backend
-npm run seed:staff   # staff@kinness.app / staff12345 → /staff/post
-npm run seed:family  # family@kinness.app / family12345 → /family/feed (linked to Mary Chen)
+npm run seed          # idempotent — skips if SGSL2024 exists
+npm run seed:reset    # clears DB and loads full demo dataset
 ```
+
+**After `npm run seed:reset`:**
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@sunrisegardens.com | Admin1234! |
+| Staff | sarah@sunrisegardens.com | Staff1234! |
+| Family | jenny.chen@gmail.com | Family1234! |
+
+Facility code: **SGSL2024** — 8 residents, 20 updates over the last 7 days.
 
 ## Quick start
 

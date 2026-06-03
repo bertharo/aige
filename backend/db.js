@@ -226,7 +226,7 @@ function ensureDefaultAdmin() {
   console.log(`Created missing admin: ${adminEmail}`);
 }
 
-async function initDatabase() {
+async function initDatabase(options = {}) {
   const wasmPath = path.join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
   const SQL = await initSqlJs({
     locateFile: () => wasmPath,
@@ -241,10 +241,27 @@ async function initDatabase() {
   }
 
   initSchema();
-  seedIfEmpty();
-  ensureDefaultAdmin();
-  console.log('SQLite ready (sql.js) at', dbPath);
+  if (!options.skipAutoSeed) {
+    seedIfEmpty();
+    ensureDefaultAdmin();
+  }
+  if (!options.quiet) {
+    console.log('SQLite ready (sql.js) at', dbPath);
+  }
   return db;
+}
+
+function clearAllData() {
+  db.exec(`
+    DELETE FROM feed_reads;
+    DELETE FROM updates;
+    DELETE FROM family_members;
+    DELETE FROM pending_invites;
+    DELETE FROM user_roles;
+    DELETE FROM residents;
+    DELETE FROM facilities;
+    DELETE FROM users;
+  `);
 }
 
 module.exports = {
@@ -253,4 +270,5 @@ module.exports = {
   randomUUID,
   ensureDefaultAdmin,
   seedIfEmpty,
+  clearAllData,
 };
