@@ -128,10 +128,8 @@ function insertRole(db, userId, role, facilityId) {
   );
 }
 
-async function main() {
-  const reset = process.argv.includes('--reset');
-
-  await initDatabase({ skipAutoSeed: true, quiet: true });
+async function runSeed({ reset = false, quiet = false } = {}) {
+  await initDatabase({ skipAutoSeed: true, quiet });
   const db = getDb();
 
   if (reset) {
@@ -142,7 +140,7 @@ async function main() {
     if (existing) {
       console.log(`Facility ${FACILITY_CODE} already seeded. Run with --reset to replace all data.`);
       printSummary();
-      return;
+      return { facilityId: existing.id, facilityCode: FACILITY_CODE };
     }
   }
 
@@ -227,6 +225,17 @@ async function main() {
 
   console.log('Seed complete.');
   printSummary();
+  return { facilityId, facilityCode: FACILITY_CODE };
+}
+
+async function main() {
+  const reset = process.argv.includes('--reset');
+  try {
+    await runSeed({ reset });
+  } catch (err) {
+    console.error('Seed failed:', err);
+    process.exit(1);
+  }
 }
 
 function printSummary() {
@@ -239,7 +248,8 @@ function printSummary() {
   console.log(`Facility code (registration): ${FACILITY_CODE}`);
 }
 
-main().catch((err) => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main();
+}
+
+module.exports = { runSeed, FACILITY_CODE };

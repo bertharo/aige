@@ -1,6 +1,9 @@
-// Relative URLs: CRA dev proxy → localhost:3000; Vercel build injects /api rewrites.
-// Set REACT_APP_API_URL only when not using proxy (e.g. cross-origin API).
-const API_URL = process.env.REACT_APP_API_URL || '';
+// Local dev: empty string → CRA proxy to localhost:3000 (see package.json "proxy").
+// Production (Vercel): defaults to Render API unless REACT_APP_API_URL is set.
+// Optional: set KINNESS_BACKEND_URL at Vercel build time for same-origin /api proxy instead.
+const API_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://aige-backend.onrender.com' : '');
 
 const REQUEST_TIMEOUT_MS = 20000;
 
@@ -52,9 +55,14 @@ export async function apiFetch(path, { token, method = 'GET', body, isFormData }
     });
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('Request timed out — is the backend running on port 3000?');
+      const hint =
+        API_URL.includes('localhost') || !API_URL
+          ? 'Start the backend: cd backend && npm run dev'
+          : `Check that the API is reachable at ${API_URL || 'your configured API URL'}`;
+      throw new Error(`Request timed out — ${hint}`);
     }
-    throw new Error('Could not connect — check your network and that the backend is running');
+    const target = apiUrl(path);
+    throw new Error(`Could not connect to ${target}. Check your network and API settings.`);
   } finally {
     clearTimeout(timeoutId);
   }

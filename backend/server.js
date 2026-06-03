@@ -586,16 +586,25 @@ app.use('*', (_req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-initDatabase()
-  .then((database) => {
-    db = database;
-    app.listen(PORT, () => {
-      console.log(`Kinness API running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Failed to start Kinness API:', err);
-    process.exit(1);
+async function startServer() {
+  db = await initDatabase();
+  if (process.env.AUTO_SEED_DEMO === 'true') {
+    const hasDemo = db.prepare('SELECT id FROM facilities WHERE upper(facility_code) = upper(?)').get('SGSL2024');
+    if (!hasDemo) {
+      console.log('AUTO_SEED_DEMO: loading Sunrise Gardens demo data...');
+      const { runSeed } = require('./seed');
+      await runSeed({ quiet: true });
+      db = require('./db').getDb();
+    }
+  }
+  app.listen(PORT, () => {
+    console.log(`Kinness API running on port ${PORT}`);
   });
+}
+
+startServer().catch((err) => {
+  console.error('Failed to start Kinness API:', err);
+  process.exit(1);
+});
 
 module.exports = app;
