@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "aige-frontend",
+  "name": "kinness-frontend",
   "builds": [
     {
       "src": "**/*",

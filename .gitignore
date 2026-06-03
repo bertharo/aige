@@ -91,9 +91,8 @@ typings/
 .nuxt
 dist
 
-# Gatsby files
+# Gatsby / build caches
 .cache/
-public
 
 # Storybook build outputs
 .out

@@ -69,4 +69,12 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Any other custom service worker logic can go here.
+// Cache family feed API when same-origin (e.g. proxied in dev)
+registerRoute(
+  ({ url }) => url.pathname === '/api/family/feed',
+  new StaleWhileRevalidate({
+    cacheName: 'kinness-feed',
+    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 })],
+  })
+);
+

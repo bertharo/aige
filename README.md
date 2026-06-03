@@ -1,190 +1,117 @@
-# AIGE - Authentication Platform
+# Kinness — Keeping Families Connected
 
-A complete authentication system with a modern frontend and secure backend API. Built with vanilla JavaScript, HTML/CSS for the frontend and Node.js/Express for the backend.
+Kinness helps elder care facilities share photo and text updates with families. Staff post in under a minute; families get an email and see updates in a warm, mobile-first feed.
 
-## 🏗️ Project Structure
+## Project structure
 
 ```
-aige/
-├── frontend/           # Frontend application
-│   ├── index.html     # Main HTML file
-│   ├── styles.css     # CSS styles and animations
-│   ├── script.js      # JavaScript functionality
-│   └── README.md      # Frontend documentation
-├── backend/           # Backend API
-│   ├── server.js      # Express server
-│   ├── package.json   # Node.js dependencies
-│   ├── env.example    # Environment variables template
-│   └── README.md      # Backend documentation
-└── README.md          # This file
+kinness/
+├── frontend/          # React PWA (Vercel)
+├── backend/           # Express + SQLite API (Railway, Render, etc.)
+└── README.md
 ```
 
-## 🚀 Quick Start
+## Demo seed accounts
 
-### Frontend
 ```bash
-# Navigate to frontend directory
-cd frontend
-
-# Open in browser (no build required)
-open index.html
-```
-
-### Backend
-```bash
-# Navigate to backend directory
 cd backend
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp env.example .env
-
-# Start development server
-npm run dev
+npm run seed:staff   # staff@kinness.app / staff12345 → /staff/post
+npm run seed:family  # family@kinness.app / family12345 → /family/feed (linked to Mary Chen)
 ```
 
-## ✨ Features
-
-### Frontend
-- 🎨 Modern, responsive design with glassmorphism effects
-- 🔐 Toggle between login and signup forms
-- ✅ Real-time form validation with error messages
-- 🔒 Password strength indicator and visibility toggle
-- 📱 Mobile-first responsive design
-- 🎭 Smooth animations and transitions
-- 🌐 Social authentication options (Google, Facebook)
+## Quick start
 
 ### Backend
-- 🔐 JWT-based authentication
-- 🔒 Bcrypt password hashing
-- ✅ Input validation and sanitization
-- 🛡️ Security middleware (Helmet, CORS)
-- 📊 Request logging with Morgan
-- 🧪 Health check endpoint
-- 🔄 Auto-reload in development
 
-## 🔧 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
-| POST | `/api/auth/register` | User registration |
-| POST | `/api/auth/login` | User authentication |
-| GET | `/api/user/profile` | Get user profile (protected) |
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **HTML5** - Semantic markup
-- **CSS3** - Modern styling with Flexbox/Grid
-- **Vanilla JavaScript** - ES6+ features
-- **Font Awesome** - Icons
-- **Google Fonts** - Typography
-
-### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **JWT** - Authentication tokens
-- **Bcrypt** - Password hashing
-- **Express-validator** - Input validation
-- **Helmet** - Security headers
-- **Morgan** - HTTP logging
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-- Modern web browser
-
-### Backend Setup
 ```bash
 cd backend
 npm install
 cp env.example .env
-# Edit .env with your configuration
+# Edit JWT_SECRET, FACILITY_CODE, SMTP_* as needed
 npm run dev
 ```
 
-### Frontend Setup
+API runs at `http://localhost:3000`. On first start, a demo facility and admin are seeded:
+
+| Field | Default |
+|-------|---------|
+| Facility code | `KINNESS2024` (or `FACILITY_CODE` in `.env`) |
+| Admin email | `admin@kinness.app` |
+| Admin password | `admin12345` |
+
+### Frontend
+
 ```bash
 cd frontend
-# No installation required - just open index.html
+npm install
+cp .env.example .env
+# Set REACT_APP_API_URL=http://localhost:3000
+npm start
 ```
 
-## 🔗 Connecting Frontend to Backend
+Open `http://localhost:3000` (CRA may use port 3000 — if it conflicts with the API, set `PORT=3001` for the frontend).
 
-1. **Start the backend server** (runs on port 3000 by default)
-2. **Update API endpoints** in `frontend/script.js` if needed
-3. **Configure CORS** on the backend for cross-origin requests
+## Roles & routes
 
-## 🧪 Testing
+After login, users are redirected by role:
 
-### Backend API Testing
-```bash
-# Health check
-curl http://localhost:3000/health
+| Role | Route | Purpose |
+|------|-------|---------|
+| `admin` | `/admin` | Dashboard, residents, family links, staff invites |
+| `staff` | `/staff/post` | Post updates with photo |
+| `family` | `/family/feed` | View updates for linked loved ones |
 
-# Register user
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@example.com","password":"password123"}'
+Registration requires **name, email, password, and facility code**. Staff/family must be invited by email (admin panel) or they register as family by default.
 
-# Login
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
-```
+## Database (SQLite)
 
-### Frontend Testing
-- Open `frontend/index.html` in your browser
-- Test form validation and animations
-- Try switching between login and signup forms
+Tables: `users`, `facilities`, `residents`, `family_members`, `updates`, `user_roles`, `feed_reads`, `pending_invites`.
 
-## 🔒 Security Features
+Data file: `backend/data/kinness.db` (created automatically).
 
-- **Password Hashing**: All passwords encrypted with bcrypt
-- **JWT Tokens**: Secure token-based authentication
-- **Input Validation**: All inputs validated and sanitized
-- **Security Headers**: Helmet middleware for protection
-- **CORS**: Configurable cross-origin resource sharing
+## Email notifications
 
-## 🚀 Deployment
+When staff posts an update, linked family members receive:
 
-### Frontend Deployment
-- Deploy to any static hosting service (Netlify, Vercel, GitHub Pages)
-- No build process required
-- Update API endpoints to point to production backend
+- **Subject:** `[Resident Name] has a new update from [Facility Name]`
+- **Body:** Update text + link to `/family/feed`
 
-### Backend Deployment
-- Deploy to Node.js hosting (Heroku, Railway, DigitalOcean)
-- Set environment variables for production
-- Use PM2 or similar for process management
-- Set up reverse proxy (nginx) for production
+Configure SMTP in `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`).
 
-## 🤝 Contributing
+## Multilingual UI
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Toggle **English | 中文** (top right). Preference stored in `localStorage`. Update content is shown as written (no auto-translation).
 
-## 📝 License
+## PWA
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- `manifest.json` — add to home screen as **Kinness**
+- Service worker — caches static assets; feed also cached in `localStorage` when offline
+- Install prompt on first visit
 
-## 🙏 Acknowledgments
+## Deployment
 
-- Font Awesome for icons
-- Google Fonts for typography
-- Express.js community for the excellent framework
-- All contributors and supporters
+### Frontend (Vercel)
 
----
+- Root directory: `frontend`
+- Build: `npm run build` (injects API proxy into `vercel.json` when `KINNESS_BACKEND_URL` is set)
+- Output: `build`
+- **Production env:** `KINNESS_BACKEND_URL=https://your-api.railway.app` (same-origin `/api` + `/uploads` proxy; enables feed offline cache in the service worker)
+- **Local dev:** `REACT_APP_API_URL=http://localhost:3000` in `frontend/.env`
 
-**Built with ❤️ for the AIGE platform**
+### Backend (Railway / Render)
 
-*For more information, see the individual README files in the `frontend/` and `backend/` directories.* 
+- Root: `backend`
+- Start: `npm start`
+- Env: see `backend/env.example`
+- Set `FRONTEND_URL` to your Vercel URL for CORS and email links
+- Persist `backend/data/` and `backend/uploads/` on hosted volumes
+
+## Design
+
+- Primary `#2D6A4F`, accent `#95D5B2`, text `#1B1B1B`
+- Minimum 16px text, 44px tap targets
+- Family UI uses “your loved one”; staff uses “update”
+
+## License
+
+MIT
