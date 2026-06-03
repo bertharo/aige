@@ -586,17 +586,19 @@ app.use('*', (_req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
+async function ensureDemoData() {
+  const hasDemo = db.prepare('SELECT id FROM facilities WHERE upper(facility_code) = upper(?)').get('SGSL2024');
+  if (hasDemo) return;
+  console.log('Sunrise Gardens demo (SGSL2024) not found — loading seed data...');
+  const { runSeed } = require('./seed');
+  await runSeed({ quiet: true });
+  db = require('./db').getDb();
+}
+
 async function startServer() {
-  db = await initDatabase();
-  if (process.env.AUTO_SEED_DEMO === 'true') {
-    const hasDemo = db.prepare('SELECT id FROM facilities WHERE upper(facility_code) = upper(?)').get('SGSL2024');
-    if (!hasDemo) {
-      console.log('AUTO_SEED_DEMO: loading Sunrise Gardens demo data...');
-      const { runSeed } = require('./seed');
-      await runSeed({ quiet: true });
-      db = require('./db').getDb();
-    }
-  }
+  const isProd = process.env.NODE_ENV === 'production';
+  db = await initDatabase({ skipAutoSeed: isProd, quiet: isProd });
+  await ensureDemoData();
   app.listen(PORT, () => {
     console.log(`Kinness API running on port ${PORT}`);
   });
