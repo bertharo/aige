@@ -114,6 +114,28 @@ app.get('/', (_req, res) => {
   res.json({ message: 'Kinness API is running', version: '2.0.0' });
 });
 
+// One-time pilot setup (set SETUP_SECRET on Render, then POST with header x-setup-secret)
+app.post('/api/setup/pilot', (req, res) => {
+  const secret = process.env.SETUP_SECRET;
+  if (!secret || req.headers['x-setup-secret'] !== secret) {
+    return res.status(404).json({ success: false, message: 'Not found' });
+  }
+  try {
+    const { seedIfEmpty, ensureDefaultAdmin } = require('./db');
+    seedIfEmpty();
+    ensureDefaultAdmin();
+    res.json({
+      success: true,
+      message: 'Pilot data ready',
+      adminEmail: (process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app').toLowerCase(),
+      facilityCode: process.env.FACILITY_CODE || 'KINNESS2024',
+    });
+  } catch (err) {
+    console.error('Setup error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.get('/health', (_req, res) => {
   let dbOk = false;
   try {
@@ -205,8 +227,9 @@ app.post('/api/auth/login', [
       return res.status(400).json({ success: false, message: 'Please enter a valid email and password' });
     }
 
-    const { email, password } = req.body;
-    const row = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const email = String(req.body.email).trim().toLowerCase();
+    const { password } = req.body;
+    const row = db.prepare('SELECT * FROM users WHERE lower(email) = ?').get(email);
     if (!row || !(await bcrypt.compare(password, row.password))) {
       return res.status(401).json({ success: false, message: 'Email or password is incorrect' });
     }

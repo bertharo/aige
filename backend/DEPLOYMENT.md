@@ -41,10 +41,27 @@ curl https://aige-backend.onrender.com/health
 
 Remove old Prisma variables (`DATABASE_URL`) — they are not used.
 
-## Demo login (after fresh deploy / empty DB)
+## Demo login (Kinness v2 only)
 
 - **Admin:** `admin@kinness.app` / `admin12345`
-- **Facility code:** `KINNESS2024`
+- **Facility code (register):** `KINNESS2024`
+
+If login returns **401** with message `"Invalid email or password"` → you are still on the **old** AIGE server (redeploy).
+
+Kinness v2 returns: `"Email or password is incorrect"`.
+
+### Still on old backend?
+
+Render → **Manual Deploy** → **Clear build cache & deploy** from `main`.
+
+### After Kinness deploy — force pilot accounts
+
+Set `SETUP_SECRET` on Render, then:
+
+```bash
+curl -X POST https://aige-backend.onrender.com/api/setup/pilot \
+  -H "x-setup-secret: YOUR_SETUP_SECRET"
+```
 
 Or run once via Render Shell:
 

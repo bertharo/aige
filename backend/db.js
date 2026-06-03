@@ -116,9 +116,10 @@ function seedIfEmpty() {
   const bcrypt = require('bcryptjs');
   const adminPassword = bcrypt.hashSync(process.env.ADMIN_SEED_PASSWORD || 'admin12345', 12);
 
+  const adminEmail = (process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app').toLowerCase();
   db.prepare(`
     INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)
-  `).run(adminId, 'Facility Admin', process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app', adminPassword);
+  `).run(adminId, 'Facility Admin', adminEmail, adminPassword);
 
   db.prepare(`
     INSERT INTO facilities (id, name, address, admin_user_id, facility_code)
@@ -134,10 +135,41 @@ function seedIfEmpty() {
     VALUES (?, ?, ?, ?, ?)
   `).run(randomUUID(), facilityId, 'Mary', 'Chen', '201');
 
-  console.log(`Seeded facility "${facilityCode}" with admin ${process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app'}`);
+  console.log(`Seeded facility "${facilityCode}" with admin ${adminEmail}`);
+}
+
+/** Ensures pilot admin exists even if DB was partially created (e.g. after Render redeploy). */
+function ensureDefaultAdmin() {
+  const bcrypt = require('bcryptjs');
+  const adminEmail = (process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app').toLowerCase();
+  const existing = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(adminEmail);
+  if (existing) return;
+
+  const facility = db.prepare('SELECT * FROM facilities LIMIT 1').get();
+  if (!facility) {
+    seedIfEmpty();
+    return;
+  }
+
+  const adminId = randomUUID();
+  const adminPassword = bcrypt.hashSync(process.env.ADMIN_SEED_PASSWORD || 'admin12345', 12);
+  db.prepare('INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)').run(
+    adminId,
+    'Facility Admin',
+    adminEmail,
+    adminPassword
+  );
+  db.prepare('INSERT INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)').run(
+    randomUUID(),
+    adminId,
+    'admin',
+    facility.id
+  );
+  console.log(`Created missing admin: ${adminEmail}`);
 }
 
 initSchema();
 seedIfEmpty();
+ensureDefaultAdmin();
 
-module.exports = { db, randomUUID };
+module.exports = { db, randomUUID, ensureDefaultAdmin, seedIfEmpty };
