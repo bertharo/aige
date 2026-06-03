@@ -1,16 +1,14 @@
 #!/usr/bin/env node
-/**
- * Seed a staff account and optional pending invite cleanup.
- * Usage: node scripts/seedStaff.js
- * Env: STAFF_SEED_EMAIL, STAFF_SEED_PASSWORD, STAFF_SEED_NAME, FACILITY_CODE
- */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const bcrypt = require('bcryptjs');
-const { db, randomUUID } = require('../db');
+const { initDatabase, getDb, randomUUID } = require('../db');
 
 async function main() {
-  const email = process.env.STAFF_SEED_EMAIL || 'staff@kinness.app';
+  await initDatabase();
+  const db = getDb();
+
+  const email = (process.env.STAFF_SEED_EMAIL || 'staff@kinness.app').toLowerCase();
   const password = process.env.STAFF_SEED_PASSWORD || 'staff12345';
   const name = process.env.STAFF_SEED_NAME || 'Care Staff';
   const facilityCode = process.env.FACILITY_CODE || 'KINNESS2024';
@@ -21,7 +19,7 @@ async function main() {
     process.exit(1);
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const existing = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
   if (existing) {
     const role = db.prepare('SELECT role FROM user_roles WHERE user_id = ? AND facility_id = ?').get(existing.id, facility.id);
     if (role?.role === 'staff') {
@@ -55,7 +53,6 @@ async function main() {
   console.log(`  Email:    ${email}`);
   console.log(`  Password: ${password}`);
   console.log(`  Facility: ${facility.name} (${facility.facility_code})`);
-  console.log('  Route after login: /staff/post');
 }
 
 main().catch((err) => {

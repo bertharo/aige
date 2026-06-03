@@ -10,8 +10,10 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-const { db, randomUUID } = require('./db');
+const { initDatabase, randomUUID, ensureDefaultAdmin, seedIfEmpty } = require('./db');
 const { sendUpdateNotification } = require('./mail');
+
+let db;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +54,13 @@ app.use(cors({
 app.use(morgan('combined'));
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
+
+app.use((req, res, next) => {
+  if (!db && req.path !== '/health') {
+    return res.status(503).json({ success: false, message: 'Database is starting — try again in a moment' });
+  }
+  next();
+});
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -121,7 +130,6 @@ app.post('/api/setup/pilot', (req, res) => {
     return res.status(404).json({ success: false, message: 'Not found' });
   }
   try {
-    const { seedIfEmpty, ensureDefaultAdmin } = require('./db');
     seedIfEmpty();
     ensureDefaultAdmin();
     res.json({
@@ -138,17 +146,19 @@ app.post('/api/setup/pilot', (req, res) => {
 
 app.get('/health', (_req, res) => {
   let dbOk = false;
-  try {
-    db.prepare('SELECT 1').get();
-    dbOk = true;
-  } catch (e) {
-    console.error('Health db check failed:', e);
+  if (db) {
+    try {
+      db.prepare('SELECT 1 as ok').get();
+      dbOk = true;
+    } catch (e) {
+      console.error('Health db check failed:', e);
+    }
   }
   res.json({
-    status: dbOk ? 'OK' : 'DEGRADED',
+    status: dbOk ? 'OK' : db ? 'DEGRADED' : 'STARTING',
     service: 'Kinness Backend',
     version: '2.0.0',
-    database: dbOk ? 'sqlite' : 'error',
+    database: dbOk ? 'sqlite' : db ? 'error' : 'starting',
     timestamp: new Date().toISOString(),
   });
 });
@@ -556,8 +566,16 @@ app.use('*', (_req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Kinness API running on port ${PORT}`);
-});
+initDatabase()
+  .then((database) => {
+    db = database;
+    app.listen(PORT, () => {
+      console.log(`Kinness API running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to start Kinness API:', err);
+    process.exit(1);
+  });
 
 module.exports = app;

@@ -1,22 +1,78 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const initSqlJs = require('sql.js');
 const fs = require('fs');
+const path = require('path');
 const { randomUUID } = require('crypto');
 
-// Render: attach a disk and set DATA_DIR=/var/data for persistence across deploys
 const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
 const dbPath = path.join(dataDir, 'kinness.db');
-let db;
-try {
-  db = new Database(dbPath);
-} catch (err) {
-  console.error('Failed to open SQLite database at', dbPath, err);
-  throw err;
+
+let sqlDb = null;
+
+function persist() {
+  if (!sqlDb) return;
+  fs.writeFileSync(dbPath, Buffer.from(sqlDb.export()));
 }
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+
+class Statement {
+  constructor(sql) {
+    this.sql = sql;
+  }
+
+  get(...params) {
+    const stmt = sqlDb.prepare(this.sql);
+    try {
+      if (params.length) stmt.bind(params);
+      if (stmt.step()) return stmt.getAsObject();
+      return undefined;
+    } finally {
+      stmt.free();
+    }
+  }
+
+  all(...params) {
+    const stmt = sqlDb.prepare(this.sql);
+    const rows = [];
+    try {
+      if (params.length) stmt.bind(params);
+      while (stmt.step()) rows.push(stmt.getAsObject());
+      return rows;
+    } finally {
+      stmt.free();
+    }
+  }
+
+  run(...params) {
+    const stmt = sqlDb.prepare(this.sql);
+    try {
+      if (params.length) stmt.bind(params);
+      stmt.step();
+    } finally {
+      stmt.free();
+    }
+    persist();
+  }
+}
+
+const db = {
+  prepare(sql) {
+    return new Statement(sql);
+  },
+  exec(sql) {
+    sqlDb.exec(sql);
+    persist();
+  },
+  transaction(fn) {
+    sqlDb.run('BEGIN TRANSACTION');
+    try {
+      fn();
+      sqlDb.run('COMMIT');
+    } catch (err) {
+      sqlDb.run('ROLLBACK');
+      throw err;
+    }
+    persist();
+  },
+};
 
 function initSchema() {
   db.exec(`
@@ -115,21 +171,24 @@ function seedIfEmpty() {
   const adminId = randomUUID();
   const bcrypt = require('bcryptjs');
   const adminPassword = bcrypt.hashSync(process.env.ADMIN_SEED_PASSWORD || 'admin12345', 12);
-
   const adminEmail = (process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app').toLowerCase();
-  db.prepare(`
-    INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)
-  `).run(adminId, 'Facility Admin', adminEmail, adminPassword);
 
+  db.prepare('INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)').run(
+    adminId,
+    'Facility Admin',
+    adminEmail,
+    adminPassword
+  );
   db.prepare(`
     INSERT INTO facilities (id, name, address, admin_user_id, facility_code)
     VALUES (?, ?, ?, ?, ?)
   `).run(facilityId, 'Sunrise Care Home', '123 Oak Street', adminId, facilityCode);
-
-  db.prepare(`
-    INSERT INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)
-  `).run(randomUUID(), adminId, 'admin', facilityId);
-
+  db.prepare('INSERT INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)').run(
+    randomUUID(),
+    adminId,
+    'admin',
+    facilityId
+  );
   db.prepare(`
     INSERT INTO residents (id, facility_id, first_name, last_name, room_number)
     VALUES (?, ?, ?, ?, ?)
@@ -138,7 +197,6 @@ function seedIfEmpty() {
   console.log(`Seeded facility "${facilityCode}" with admin ${adminEmail}`);
 }
 
-/** Ensures pilot admin exists even if DB was partially created (e.g. after Render redeploy). */
 function ensureDefaultAdmin() {
   const bcrypt = require('bcryptjs');
   const adminEmail = (process.env.ADMIN_SEED_EMAIL || 'admin@kinness.app').toLowerCase();
@@ -168,8 +226,31 @@ function ensureDefaultAdmin() {
   console.log(`Created missing admin: ${adminEmail}`);
 }
 
-initSchema();
-seedIfEmpty();
-ensureDefaultAdmin();
+async function initDatabase() {
+  const wasmPath = path.join(__dirname, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
+  const SQL = await initSqlJs({
+    locateFile: () => wasmPath,
+  });
 
-module.exports = { db, randomUUID, ensureDefaultAdmin, seedIfEmpty };
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+  if (fs.existsSync(dbPath)) {
+    sqlDb = new SQL.Database(fs.readFileSync(dbPath));
+  } else {
+    sqlDb = new SQL.Database();
+  }
+
+  initSchema();
+  seedIfEmpty();
+  ensureDefaultAdmin();
+  console.log('SQLite ready (sql.js) at', dbPath);
+  return db;
+}
+
+module.exports = {
+  initDatabase,
+  getDb: () => db,
+  randomUUID,
+  ensureDefaultAdmin,
+  seedIfEmpty,
+};

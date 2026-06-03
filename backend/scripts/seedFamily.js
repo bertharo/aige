@@ -1,15 +1,14 @@
 #!/usr/bin/env node
-/**
- * Seed a family account linked to the first resident at the facility.
- * Usage: node scripts/seedFamily.js
- */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const bcrypt = require('bcryptjs');
-const { db, randomUUID } = require('../db');
+const { initDatabase, getDb, randomUUID } = require('../db');
 
 async function main() {
-  const email = process.env.FAMILY_SEED_EMAIL || 'family@kinness.app';
+  await initDatabase();
+  const db = getDb();
+
+  const email = (process.env.FAMILY_SEED_EMAIL || 'family@kinness.app').toLowerCase();
   const password = process.env.FAMILY_SEED_PASSWORD || 'family12345';
   const name = process.env.FAMILY_SEED_NAME || 'Family Member';
   const facilityCode = process.env.FACILITY_CODE || 'KINNESS2024';
@@ -32,7 +31,7 @@ async function main() {
   }
 
   let userId;
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const existing = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
   if (existing) {
     userId = existing.id;
     db.prepare('INSERT OR IGNORE INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)').run(
@@ -61,7 +60,6 @@ async function main() {
   console.log(`  Email:    ${email}`);
   console.log(`  Password: ${password}`);
   console.log(`  Linked:   ${resident.first_name} ${resident.last_name}`);
-  console.log('  Route after login: /family/feed');
 }
 
 main().catch((err) => {

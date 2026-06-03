@@ -22,8 +22,9 @@ curl https://aige-backend.onrender.com/health
 
 1. [Render Dashboard](https://dashboard.render.com/) → **aige-backend**
 2. **Settings** → Root Directory: `backend`
-3. **Build Command:** `npm install`
-4. **Start Command:** `npm start` (must **not** be `npx prisma` or `debug-prisma.js`)
+3. **Build Command:** `npm install && npm run build` (must **not** include `prisma` or `debug-prisma.js`)
+4. **Start Command:** `npm start`
+5. **Node version:** 20 (see `backend/.nvmrc`)
 5. **Manual Deploy** → **Clear build cache & deploy** (from `main` on GitHub)
 
 ## Environment variables
