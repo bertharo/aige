@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
+import StaffTab from '../components/admin/StaffTab';
 import { apiFetch, photoUrl } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -41,8 +42,6 @@ export default function AdminPanel({ user, token, onLogout }) {
   const [residentForm, setResidentForm] = useState(null);
   const [familyEmail, setFamilyEmail] = useState({});
   const [familyRel, setFamilyRel] = useState({});
-  const [staffEmail, setStaffEmail] = useState('');
-
   const loadDashboard = useCallback(async () => {
     const data = await fetchSilent('/api/admin/dashboard', { token });
     setDashboard(data?.dashboard ?? null);
@@ -143,24 +142,23 @@ export default function AdminPanel({ user, token, onLogout }) {
     }
   };
 
-  const inviteStaff = async (e) => {
-    e.preventDefault();
-    try {
-      await apiFetch('/api/admin/invite-staff', {
-        token,
-        method: 'POST',
-        body: { email: staffEmail },
-      });
-      setMessage(t('inviteSent'));
-      setStaffEmail('');
-      await loadAll();
-    } catch (err) {
-      console.error('[admin] invite staff', err);
-    }
-  };
-
   const hasDashboardData = Boolean(dashboard?.facilityName);
   const showDashboardEmpty = !loading && tab === 'dashboard' && !hasDashboardData;
+
+  if (tab === 'staff') {
+    return (
+      <StaffTab
+        token={token}
+        onLogout={onLogout}
+        tab={tab}
+        setTab={setTab}
+        tabs={tabs}
+        apiStaff={staffData.staff}
+        apiPending={staffData.pendingInvites}
+        onStaffMutated={loadStaff}
+      />
+    );
+  }
 
   return (
     <Layout user={user} onLogout={onLogout} title={t('adminTitle')}>
@@ -297,39 +295,6 @@ export default function AdminPanel({ user, token, onLogout }) {
           </div>
         )}
 
-        {tab === 'staff' && (
-          <div>
-            {loading && <p className="text-base text-kinness-text/70 mb-4">{t('loading')}</p>}
-            <form onSubmit={inviteStaff} className="mb-6 flex flex-col gap-2">
-              <input
-                type="email"
-                value={staffEmail}
-                onChange={(e) => setStaffEmail(e.target.value)}
-                placeholder={t('email')}
-                required
-                className="min-h-[48px] px-4 border-2 border-kinness-accent rounded-xl text-base"
-              />
-              <button type="submit" className="min-h-[48px] bg-kinness-primary text-white font-semibold rounded-xl">
-                {t('addStaffEmail')}
-              </button>
-            </form>
-            {!loading && staffData.staff.length === 0 && staffData.pendingInvites.length === 0 && (
-              <p className="text-base text-kinness-text/70">{t('noStaff')}</p>
-            )}
-            <ul className="space-y-2">
-              {staffData.staff.map((s) => (
-                <li key={s.id} className="p-3 border rounded-xl text-base">
-                  {s.name} — {s.email}
-                </li>
-              ))}
-              {staffData.pendingInvites.map((p, i) => (
-                <li key={i} className="p-3 border border-dashed rounded-xl text-sm text-kinness-text/70">
-                  {t('pendingInvite')}: {p.email}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </Layout>
   );
