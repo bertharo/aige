@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
+import LangPills from '../LangPills';
+import { ACCENT, FONT_STACK } from '../../theme';
+
+export { ACCENT };
 
 export const AdminThemeContext = createContext({ dark: false });
 export function useAdminDark() {
   return useContext(AdminThemeContext).dark;
 }
-
-export const ACCENT = '#5A4FF7';
 
 export function useAdminTheme() {
   const [dark, setDark] = useState(() => localStorage.getItem('kinness_theme') === 'dark');
@@ -21,7 +23,7 @@ export function useAdminTheme() {
   return { dark, toggleTheme };
 }
 
-function TopBar({ dark, onToggleTheme, onLogout, t, lang, setLang }) {
+function TopBar({ dark, onToggleTheme, onLogout, t }) {
   return (
     <header
       className={`sticky top-0 z-50 border-b ${dark ? 'border-white/10 bg-[#1a1a1a]' : 'border-black/8 bg-white'}`}
@@ -34,25 +36,7 @@ function TopBar({ dark, onToggleTheme, onLogout, t, lang, setLang }) {
           Kinness
         </span>
         <div className="flex items-center gap-1.5">
-          <div
-            className={`flex rounded-full p-0.5 text-[13px] font-medium ${dark ? 'bg-white/10' : 'bg-black/5'}`}
-            role="group"
-            aria-label={t('language')}
-          >
-            {['en', 'zh'].map((code) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => setLang(code)}
-                className={`px-2.5 py-1 rounded-full transition-colors duration-200 min-h-[30px] ${
-                  lang === code ? 'text-white' : dark ? 'text-white/50' : 'text-black/45'
-                }`}
-                style={lang === code ? { backgroundColor: ACCENT } : undefined}
-              >
-                {code === 'en' ? 'EN' : '中文'}
-              </button>
-            ))}
-          </div>
+          <LangPills dark={dark} compact />
           <button
             type="button"
             onClick={onToggleTheme}
@@ -104,15 +88,15 @@ export function NavTabs({ tabs, active, onChange, dark }) {
 }
 
 export default function AdminShell({ onLogout, tab, setTab, tabs, children, pageTitle }) {
-  const { t, lang, setLang } = useLanguage();
+  const { t } = useLanguage();
   const { dark, toggleTheme } = useAdminTheme();
 
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${dark ? 'bg-[#1a1a1a]' : 'bg-white'}`}
-      style={{ fontFamily: 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif' }}
+      style={{ fontFamily: FONT_STACK }}
     >
-      <TopBar dark={dark} onToggleTheme={toggleTheme} onLogout={onLogout} t={t} lang={lang} setLang={setLang} />
+      <TopBar dark={dark} onToggleTheme={toggleTheme} onLogout={onLogout} t={t} />
       <div className={`px-4 pt-2 pb-0 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
         <h1 className="text-[22px] font-medium tracking-tight">{pageTitle}</h1>
       </div>

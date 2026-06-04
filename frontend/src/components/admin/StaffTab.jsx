@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { apiFetch } from '../../api/client';
-import { ACCENT, useAdminDark } from './AdminShell';
+import { useAdminDark } from './AdminShell';
+import { ACCENT } from '../../theme';
 
 const AVATAR_PALETTES = [
   { bg: '#E8E7FF', text: '#2D2A6E' },

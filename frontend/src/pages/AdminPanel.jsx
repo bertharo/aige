@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import AdminShell, { ACCENT, useAdminDark } from '../components/admin/AdminShell';
+import AdminShell, { useAdminDark } from '../components/admin/AdminShell';
+import { ACCENT } from '../theme';
 import StaffTabContent from '../components/admin/StaffTab';
 import { apiFetch, photoUrl } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';

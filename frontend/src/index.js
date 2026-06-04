@@ -4,25 +4,50 @@ import './index.css';
 import App from './App.jsx';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import reportWebVitals from './reportWebVitals';
+import { BUILD_ID } from './buildInfo';
+
+const BUILD_KEY = 'kinness_build_id';
+
+async function clearStalePwaCache() {
+  const previous = localStorage.getItem(BUILD_KEY);
+  if (previous === BUILD_ID) return false;
+
+  localStorage.setItem(BUILD_KEY, BUILD_ID);
+
+  if (previous) {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((r) => r.unregister()));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    window.location.reload();
+    return true;
+  }
+
+  return false;
+}
 
 const container = document.getElementById('root');
 const root = createRoot(container);
-root.render(<App />);
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.register({
-  onUpdate(registration) {
-    const waiting = registration.waiting;
-    if (!waiting) return;
-    waiting.postMessage({ type: 'SKIP_WAITING' });
-    const reload = () => window.location.reload();
-    navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true });
-  },
+clearStalePwaCache().then((reloading) => {
+  if (reloading) return;
+
+  root.render(<App />);
+
+  serviceWorkerRegistration.register({
+    onUpdate(registration) {
+      const waiting = registration.waiting;
+      if (!waiting) return;
+      waiting.postMessage({ type: 'SKIP_WAITING' });
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), {
+        once: true,
+      });
+    },
+  });
 });
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
