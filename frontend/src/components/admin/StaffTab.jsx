@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { apiFetch } from '../../api/client';
 import { useAdminDark } from './AdminShell';
-import { ACCENT } from '../../theme';
+import { ACCENT, glassField } from '../../theme';
 
 const AVATAR_PALETTES = [
   { bg: '#E8E7FF', text: '#2D2A6E' },
@@ -63,11 +63,7 @@ function AddStaffRow({ email, setEmail, onAdd, dark, t, adding }) {
       <p className={`text-[14px] font-medium mb-1.5 ${dark ? 'text-white/50' : 'text-black/45'}`}>
         {t('addStaffEmail')}
       </p>
-      <div
-        className={`flex items-stretch rounded-2xl overflow-hidden border-2 ${
-          dark ? 'border-white/15 bg-white/5' : 'border-black/10 bg-black/[0.02]'
-        }`}
-      >
+      <div className={`flex items-stretch overflow-hidden ${glassField(dark)}`}>
         <input
           type="email"
           value={email}
@@ -96,7 +92,7 @@ function StaffItem({ member, onRemove, dark }) {
     <li className="group relative">
       <div
         className={`flex items-center gap-3 px-4 py-2 rounded-2xl transition-colors ${
-          dark ? 'hover:bg-white/5' : 'hover:bg-black/[0.03]'
+          dark ? 'hover:bg-white/[0.06]' : 'hover:bg-white/40'
         }`}
       >
         <div

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { LanguageProvider } from './i18n/LanguageContext';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import LanguagePicker from './components/LanguagePicker';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StaffPost from './pages/StaffPost';
@@ -136,12 +137,26 @@ function AppRoutes() {
   );
 }
 
+function AppShell() {
+  const { langChosen, showPicker, chooseLanguage } = useLanguage();
+
+  if (!langChosen || showPicker) {
+    return <LanguagePicker onChoose={chooseLanguage} />;
+  }
+
+  return (
+    <>
+      <InstallPrompt />
+      <AppRoutes />
+    </>
+  );
+}
+
 function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
-        <InstallPrompt />
-        <AppRoutes />
+        <AppShell />
       </BrowserRouter>
     </LanguageProvider>
   );

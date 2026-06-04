@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminShell, { useAdminDark } from '../components/admin/AdminShell';
-import { ACCENT } from '../theme';
+import { ACCENT, glassField, glassPanel } from '../theme';
 import StaffTabContent from '../components/admin/StaffTab';
 import { apiFetch, photoUrl } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -23,13 +23,24 @@ function body(dark) {
 }
 
 function card(dark) {
-  return dark
-    ? 'border-2 border-white/15 bg-white/5 rounded-2xl'
-    : 'border-2 border-black/10 bg-black/[0.02] rounded-2xl';
+  return glassPanel(dark);
 }
 
 function btnPrimary() {
   return 'min-h-[46px] px-5 text-[15px] font-medium text-white rounded-2xl disabled:opacity-40 w-full';
+}
+
+function GlassInput({ dark, className = '', ...props }) {
+  return (
+    <div className={glassField(dark)}>
+      <input
+        className={`w-full min-h-[44px] px-3 text-[16px] bg-transparent outline-none ${
+          dark ? 'text-white placeholder:text-white/30' : 'text-[#0a0a0a] placeholder:text-black/30'
+        } ${className}`}
+        {...props}
+      />
+    </div>
+  );
 }
 
 function DashboardEmpty({ t, onAddResident }) {
@@ -52,7 +63,7 @@ function DashboardEmpty({ t, onAddResident }) {
 
 function Stat({ label, value, dark }) {
   return (
-    <div className={`px-4 py-3 flex justify-between items-center ${card(dark)}`}>
+    <div className={`px-4 py-2.5 flex justify-between items-center ${card(dark)}`}>
       <span className={`text-[16px] font-normal ${body(dark)}`}>{label}</span>
       <span className="text-[26px] font-medium" style={{ color: ACCENT }}>
         {value}
@@ -121,7 +132,7 @@ function AdminTabContent({
           >
             {t('addResident')}
           </button>
-          <div className={`p-4 ${card(dark)}`}>
+          <div className={`px-4 py-3 ${card(dark)}`}>
             <p className={`text-[14px] font-medium ${sec(dark)}`}>{t('facility')}</p>
             <p className={`text-[20px] font-medium mt-0.5 ${body(dark)}`}>{dashboard.facilityName}</p>
             <p className={`text-[14px] font-medium mt-1 ${sec(dark)}`}>Code: {dashboard.facilityCode}</p>
@@ -148,32 +159,9 @@ function AdminTabContent({
 
           {residentForm && (
             <form onSubmit={saveResident} className={`mb-3 p-3 space-y-2 ${card(dark)}`}>
-              <input
-                name="firstName"
-                placeholder={t('firstName')}
-                required
-                defaultValue={residentForm.first_name}
-                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
-                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
-                }`}
-              />
-              <input
-                name="lastName"
-                placeholder={t('lastName')}
-                required
-                defaultValue={residentForm.last_name}
-                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
-                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
-                }`}
-              />
-              <input
-                name="roomNumber"
-                placeholder={t('room')}
-                defaultValue={residentForm.room_number}
-                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
-                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
-                }`}
-              />
+              <GlassInput dark={dark} name="firstName" placeholder={t('firstName')} required defaultValue={residentForm.first_name} />
+              <GlassInput dark={dark} name="lastName" placeholder={t('lastName')} required defaultValue={residentForm.last_name} />
+              <GlassInput dark={dark} name="roomNumber" placeholder={t('room')} defaultValue={residentForm.room_number} />
               <input type="file" name="photo" accept="image/*" className={`text-[15px] ${sec(dark)}`} />
               <div className="flex gap-2">
                 <button type="submit" className={`flex-1 ${btnPrimary()}`} style={{ backgroundColor: ACCENT }}>
@@ -245,7 +233,7 @@ function AdminTabContent({
           {loading && <p className={`text-[16px] mb-2 ${sec(dark)}`}>{t('loading')}</p>}
           <ul className="space-y-2">
             {familyLinks.map((r) => (
-              <li key={r.id} className={`p-3 ${card(dark)}`}>
+              <li key={r.id} className={`px-4 py-3 ${card(dark)}`}>
                 <p className={`text-[17px] font-medium mb-1.5 ${body(dark)}`}>
                   {r.first_name} {r.last_name}
                 </p>
@@ -264,11 +252,7 @@ function AdminTabContent({
                   </p>
                 ))}
                 <div className="flex flex-col gap-1.5 mt-1">
-                  <div
-                    className={`flex items-stretch rounded-2xl overflow-hidden border-2 ${
-                      dark ? 'border-white/15 bg-white/5' : 'border-black/10 bg-black/[0.02]'
-                    }`}
-                  >
+                  <div className={`flex items-stretch overflow-hidden ${glassField(dark)}`}>
                     <input
                       type="email"
                       placeholder={t('email')}
@@ -279,14 +263,12 @@ function AdminTabContent({
                       }`}
                     />
                   </div>
-                  <input
+                  <GlassInput
+                    dark={dark}
                     type="text"
                     placeholder={t('relationship')}
                     value={familyRel[r.id] || ''}
                     onChange={(e) => setFamilyRel((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                    className={`min-h-[44px] px-3 rounded-2xl border-2 text-[16px] bg-transparent outline-none ${
-                      dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
-                    }`}
                   />
                   <button
                     type="button"

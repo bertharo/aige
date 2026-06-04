@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
-import LangPills from '../LangPills';
-import { ACCENT, FONT_STACK } from '../../theme';
+import GlassBackground from '../GlassBackground';
+import { LangChangeButton } from '../LanguagePicker';
+import { ACCENT, FONT_STACK, glassBar } from '../../theme';
 
 export { ACCENT };
 
@@ -23,20 +24,18 @@ export function useAdminTheme() {
   return { dark, toggleTheme };
 }
 
-function TopBar({ dark, onToggleTheme, onLogout, t }) {
+function TopBar({ dark, onToggleTheme, onLogout, t, onLanguage }) {
   return (
-    <header
-      className={`sticky top-0 z-50 border-b ${dark ? 'border-white/10 bg-[#1a1a1a]' : 'border-black/8 bg-white'}`}
-    >
+    <header className={`sticky top-0 z-50 border-b ${glassBar(dark)}`}>
       <div className="flex items-center justify-between h-12 px-4 max-w-[390px] mx-auto">
         <span
           className="text-[18px] font-medium tracking-tight"
-          style={{ color: dark ? '#fafafa' : '#0a0a0a', fontFamily: 'ui-rounded, system-ui, sans-serif' }}
+          style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
         >
           Kinness
         </span>
         <div className="flex items-center gap-1.5">
-          <LangPills dark={dark} compact />
+          <LangChangeButton dark={dark} onClick={onLanguage} />
           <button
             type="button"
             onClick={onToggleTheme}
@@ -62,11 +61,7 @@ function TopBar({ dark, onToggleTheme, onLogout, t }) {
 
 export function NavTabs({ tabs, active, onChange, dark }) {
   return (
-    <nav
-      className={`flex gap-1 overflow-x-auto px-4 py-1.5 max-w-[390px] mx-auto border-b ${
-        dark ? 'border-white/10' : 'border-black/8'
-      }`}
-    >
+    <nav className={`flex gap-1.5 overflow-x-auto px-4 py-2 max-w-[390px] mx-auto ${glassBar(dark)} border-b`}>
       {tabs.map((tb) => {
         const isActive = active === tb.id;
         return (
@@ -74,7 +69,7 @@ export function NavTabs({ tabs, active, onChange, dark }) {
             key={tb.id}
             type="button"
             onClick={() => onChange(tb.id)}
-            className={`relative shrink-0 px-3 py-1.5 text-[14px] font-medium transition-colors rounded-full min-h-[34px] ${
+            className={`relative shrink-0 px-3 py-1.5 text-[14px] font-medium transition-all rounded-full min-h-[34px] ${
               isActive ? 'text-white' : dark ? 'text-white/50' : 'text-black/45'
             }`}
             style={isActive ? { backgroundColor: ACCENT } : undefined}
@@ -88,22 +83,27 @@ export function NavTabs({ tabs, active, onChange, dark }) {
 }
 
 export default function AdminShell({ onLogout, tab, setTab, tabs, children, pageTitle }) {
-  const { t } = useLanguage();
+  const { t, openLanguagePicker } = useLanguage();
   const { dark, toggleTheme } = useAdminTheme();
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${dark ? 'bg-[#1a1a1a]' : 'bg-white'}`}
-      style={{ fontFamily: FONT_STACK }}
-    >
-      <TopBar dark={dark} onToggleTheme={toggleTheme} onLogout={onLogout} t={t} />
-      <div className={`px-4 pt-2 pb-0 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
-        <h1 className="text-[22px] font-medium tracking-tight">{pageTitle}</h1>
+    <GlassBackground dark={dark}>
+      <div className="min-h-screen" style={{ fontFamily: FONT_STACK }}>
+        <TopBar
+          dark={dark}
+          onToggleTheme={toggleTheme}
+          onLogout={onLogout}
+          t={t}
+          onLanguage={openLanguagePicker}
+        />
+        <div className={`px-4 pt-3 pb-1 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
+          <h1 className="text-[22px] font-medium tracking-tight">{pageTitle}</h1>
+        </div>
+        <NavTabs tabs={tabs} active={tab} onChange={setTab} dark={dark} />
+        <AdminThemeContext.Provider value={{ dark }}>
+          <div className="max-w-[390px] mx-auto pb-6">{children}</div>
+        </AdminThemeContext.Provider>
       </div>
-      <NavTabs tabs={tabs} active={tab} onChange={setTab} dark={dark} />
-      <AdminThemeContext.Provider value={{ dark }}>
-        <div className="max-w-[390px] mx-auto">{children}</div>
-      </AdminThemeContext.Provider>
-    </div>
+    </GlassBackground>
   );
 }
