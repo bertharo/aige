@@ -1,7 +1,7 @@
 import React from 'react';
 import GlassBackground from './GlassBackground';
 import { LangChangeButton } from './LanguagePicker';
-import { ACCENT, FONT_STACK, glassField, glassPanel } from '../theme';
+import { ACCENT, btnAccentClass, FONT_STACK, glassField, glassPanel } from '../theme';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export default function AuthLayout({ children }) {
@@ -29,7 +29,7 @@ export default function AuthLayout({ children }) {
 }
 
 export function authInputClass() {
-  return 'w-full min-h-[48px] px-4 text-[16px] font-normal bg-transparent outline-none text-[#0a0a0a] placeholder:text-black/30';
+  return 'w-full h-10 px-3 text-[15px] font-normal bg-transparent outline-none text-[#0a0a0a] placeholder:text-black/30';
 }
 
 export function authFieldWrapClass() {
@@ -37,7 +37,7 @@ export function authFieldWrapClass() {
 }
 
 export function authButtonClass() {
-  return 'w-full min-h-[48px] text-[16px] font-medium text-white rounded-2xl disabled:opacity-40';
+  return `w-full ${btnAccentClass()}`;
 }
 
 export function authButtonStyle() {

@@ -27,29 +27,29 @@ export function useAdminTheme() {
 function TopBar({ dark, onToggleTheme, onLogout, t, onLanguage }) {
   return (
     <header className={`sticky top-0 z-50 border-b ${glassBar(dark)}`}>
-      <div className="flex items-center justify-between h-12 px-4 max-w-[390px] mx-auto">
+      <div className="flex items-center justify-between h-11 px-4 max-w-[390px] mx-auto">
         <span
-          className="text-[18px] font-medium tracking-tight"
+          className="text-[17px] font-medium tracking-tight"
           style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
         >
           Kinness
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <LangChangeButton dark={dark} onClick={onLanguage} />
           <button
             type="button"
             onClick={onToggleTheme}
             aria-label={dark ? 'Light mode' : 'Dark mode'}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-300 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
               dark ? 'bg-white/10 text-amber-300' : 'bg-black/5 text-[#1a1a1a]'
             }`}
           >
-            <span className="text-base leading-none">{dark ? '☀️' : '🌙'}</span>
+            <span className="text-sm leading-none">{dark ? '☀️' : '🌙'}</span>
           </button>
           <button
             type="button"
             onClick={onLogout}
-            className={`text-[14px] font-medium min-h-[36px] px-1 ${dark ? 'text-white/70' : 'text-black/55'}`}
+            className={`text-[13px] font-medium h-8 px-1.5 ${dark ? 'text-white/65' : 'text-black/50'}`}
           >
             {t('signOut')}
           </button>
@@ -60,8 +60,15 @@ function TopBar({ dark, onToggleTheme, onLogout, t, onLanguage }) {
 }
 
 export function NavTabs({ tabs, active, onChange, dark }) {
+  const inactive = dark ? 'text-white/45 hover:text-white/70' : 'text-black/40 hover:text-black/60';
+  const activeColor = dark ? '#fafafa' : ACCENT;
+
   return (
-    <nav className={`flex gap-1.5 overflow-x-auto px-4 py-2 max-w-[390px] mx-auto ${glassBar(dark)} border-b`}>
+    <nav
+      className={`flex gap-5 overflow-x-auto px-4 max-w-[390px] mx-auto border-b ${
+        dark ? 'border-white/[0.08]' : 'border-black/[0.06]'
+      }`}
+    >
       {tabs.map((tb) => {
         const isActive = active === tb.id;
         return (
@@ -69,10 +76,14 @@ export function NavTabs({ tabs, active, onChange, dark }) {
             key={tb.id}
             type="button"
             onClick={() => onChange(tb.id)}
-            className={`relative shrink-0 px-3 py-1.5 text-[14px] font-medium transition-all rounded-full min-h-[34px] ${
-              isActive ? 'text-white' : dark ? 'text-white/50' : 'text-black/45'
+            className={`shrink-0 pb-2 pt-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-px ${
+              isActive ? '' : `border-transparent ${inactive}`
             }`}
-            style={isActive ? { backgroundColor: ACCENT } : undefined}
+            style={
+              isActive
+                ? { color: activeColor, borderBottomColor: ACCENT }
+                : undefined
+            }
           >
             {tb.label}
           </button>
@@ -96,8 +107,8 @@ export default function AdminShell({ onLogout, tab, setTab, tabs, children, page
           t={t}
           onLanguage={openLanguagePicker}
         />
-        <div className={`px-4 pt-3 pb-1 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
-          <h1 className="text-[22px] font-medium tracking-tight">{pageTitle}</h1>
+        <div className={`px-4 pt-2.5 pb-0 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}>
+          <h1 className="text-[18px] font-medium tracking-tight">{pageTitle}</h1>
         </div>
         <NavTabs tabs={tabs} active={tab} onChange={setTab} dark={dark} />
         <AdminThemeContext.Provider value={{ dark }}>

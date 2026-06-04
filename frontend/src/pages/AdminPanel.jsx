@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminShell, { useAdminDark } from '../components/admin/AdminShell';
-import { ACCENT, glassField, glassPanel } from '../theme';
+import { ACCENT, btnAccentClass, CARD_INNER, glassField, glassPanel } from '../theme';
 import StaffTabContent from '../components/admin/StaffTab';
 import { apiFetch, photoUrl } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -27,14 +27,14 @@ function card(dark) {
 }
 
 function btnPrimary() {
-  return 'min-h-[46px] px-5 text-[15px] font-medium text-white rounded-2xl disabled:opacity-40 w-full';
+  return `${btnAccentClass()} w-full`;
 }
 
 function GlassInput({ dark, className = '', ...props }) {
   return (
     <div className={glassField(dark)}>
       <input
-        className={`w-full min-h-[44px] px-3 text-[16px] bg-transparent outline-none ${
+        className={`w-full h-10 px-3 text-[15px] bg-transparent outline-none ${
           dark ? 'text-white placeholder:text-white/30' : 'text-[#0a0a0a] placeholder:text-black/30'
         } ${className}`}
         {...props}
@@ -63,9 +63,9 @@ function DashboardEmpty({ t, onAddResident }) {
 
 function Stat({ label, value, dark }) {
   return (
-    <div className={`px-4 py-2.5 flex justify-between items-center ${card(dark)}`}>
-      <span className={`text-[16px] font-normal ${body(dark)}`}>{label}</span>
-      <span className="text-[26px] font-medium" style={{ color: ACCENT }}>
+    <div className={`${card(dark)} ${CARD_INNER} flex items-center justify-between gap-3`}>
+      <span className={`text-[14px] font-normal leading-tight ${body(dark)}`}>{label}</span>
+      <span className="text-[20px] font-medium tabular-nums leading-none" style={{ color: ACCENT }}>
         {value}
       </span>
     </div>
@@ -123,21 +123,25 @@ function AdminTabContent({
       {showDashboardEmpty && <DashboardEmpty t={t} onAddResident={goToAddResident} />}
 
       {!loading && tab === 'dashboard' && dashboard && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <button
             type="button"
             onClick={goToAddResident}
-            className={`text-[15px] font-medium mb-1 ${sec(dark)} hover:opacity-80`}
+            className="text-[13px] font-medium mb-0.5 hover:opacity-80"
             style={{ color: ACCENT }}
           >
             {t('addResident')}
           </button>
-          <div className={`px-4 py-3 ${card(dark)}`}>
-            <p className={`text-[14px] font-medium ${sec(dark)}`}>{t('facility')}</p>
-            <p className={`text-[20px] font-medium mt-0.5 ${body(dark)}`}>{dashboard.facilityName}</p>
-            <p className={`text-[14px] font-medium mt-1 ${sec(dark)}`}>Code: {dashboard.facilityCode}</p>
+          <div className={`${card(dark)} ${CARD_INNER} flex items-center justify-between gap-3`}>
+            <div className="min-w-0 flex-1">
+              <p className={`text-[11px] font-medium uppercase tracking-wide ${sec(dark)}`}>{t('facility')}</p>
+              <p className={`text-[15px] font-medium leading-tight truncate ${body(dark)}`}>
+                {dashboard.facilityName}
+              </p>
+            </div>
+            <span className={`text-[12px] font-medium shrink-0 ${sec(dark)}`}>{dashboard.facilityCode}</span>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Stat label={t('residentsCount')} value={dashboard.residentCount} dark={dark} />
             <Stat label={t('familyLinked')} value={dashboard.familyCount} dark={dark} />
             <Stat label={t('updatesToday')} value={dashboard.updatesToday} dark={dark} />
@@ -151,7 +155,7 @@ function AdminTabContent({
           <button
             type="button"
             onClick={() => setResidentForm({})}
-            className={`mb-2 ${btnPrimary()}`}
+            className={`mb-1.5 ${btnPrimary()}`}
             style={{ backgroundColor: ACCENT }}
           >
             {t('addResident')}
@@ -170,7 +174,7 @@ function AdminTabContent({
                 <button
                   type="button"
                   onClick={() => setResidentForm(null)}
-                  className={`min-h-[46px] px-4 text-[15px] font-medium rounded-2xl ${sec(dark)}`}
+                  className={`h-10 px-3 text-[14px] font-medium rounded-xl ${sec(dark)}`}
                 >
                   {t('cancel')}
                 </button>
@@ -233,7 +237,7 @@ function AdminTabContent({
           {loading && <p className={`text-[16px] mb-2 ${sec(dark)}`}>{t('loading')}</p>}
           <ul className="space-y-2">
             {familyLinks.map((r) => (
-              <li key={r.id} className={`px-4 py-3 ${card(dark)}`}>
+              <li key={r.id} className={`${card(dark)} px-3.5 py-3`}>
                 <p className={`text-[17px] font-medium mb-1.5 ${body(dark)}`}>
                   {r.first_name} {r.last_name}
                 </p>

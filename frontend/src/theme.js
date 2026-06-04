@@ -6,9 +6,17 @@ export const FONT_STACK = 'ui-rounded, "SF Pro Rounded", system-ui, sans-serif';
 /** Frosted glass panel */
 export function glassPanel(dark) {
   return dark
-    ? 'rounded-2xl border border-white/[0.14] bg-white/[0.07] backdrop-blur-xl backdrop-saturate-150'
-    : 'rounded-2xl border border-white/70 bg-white/45 backdrop-blur-xl backdrop-saturate-150';
+    ? 'rounded-xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-xl backdrop-saturate-150'
+    : 'rounded-xl border border-white/60 bg-white/40 backdrop-blur-xl backdrop-saturate-150';
 }
+
+/** Compact primary CTA */
+export function btnAccentClass() {
+  return 'h-10 px-4 text-[14px] font-medium text-white rounded-xl disabled:opacity-40';
+}
+
+/** Uniform dashboard / list row */
+export const CARD_INNER = 'px-3.5 py-2.5 min-h-[44px]';
 
 /** Sticky header / nav chrome */
 export function glassBar(dark) {
@@ -20,8 +28,8 @@ export function glassBar(dark) {
 /** Inputs and unified add rows */
 export function glassField(dark) {
   return dark
-    ? 'rounded-2xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-lg'
-    : 'rounded-2xl border border-white/80 bg-white/35 backdrop-blur-lg';
+    ? 'rounded-xl border border-white/[0.12] bg-white/[0.06] backdrop-blur-lg'
+    : 'rounded-xl border border-white/80 bg-white/35 backdrop-blur-lg';
 }
 
 export function pageBg(dark) {

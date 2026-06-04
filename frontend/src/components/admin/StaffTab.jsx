@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { apiFetch } from '../../api/client';
 import { useAdminDark } from './AdminShell';
-import { ACCENT, glassField } from '../../theme';
+import { ACCENT, btnAccentClass, glassField } from '../../theme';
 
 const AVATAR_PALETTES = [
   { bg: '#E8E7FF', text: '#2D2A6E' },
@@ -69,14 +69,14 @@ function AddStaffRow({ email, setEmail, onAdd, dark, t, adding }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="name@email.com"
-          className={`flex-1 min-h-[46px] px-4 text-[16px] font-normal bg-transparent outline-none ${
+          className={`flex-1 h-10 px-3 text-[15px] font-normal bg-transparent outline-none ${
             dark ? 'text-white placeholder:text-white/30' : 'text-[#0a0a0a] placeholder:text-black/30'
           }`}
         />
         <button
           type="submit"
           disabled={adding || !email.trim()}
-          className="px-5 text-[15px] font-medium text-white disabled:opacity-40 min-w-[72px] transition-opacity"
+          className={`${btnAccentClass()} shrink-0 rounded-none rounded-r-xl min-w-[64px] transition-opacity`}
           style={{ backgroundColor: ACCENT }}
         >
           {t('staffAdd')}
