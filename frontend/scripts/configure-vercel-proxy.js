@@ -11,6 +11,14 @@ const vercelPath = path.join(__dirname, '..', 'vercel.json');
 const base = {
   headers: [
     {
+      source: '/index.html',
+      headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }],
+    },
+    {
+      source: '/service-worker.js',
+      headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }],
+    },
+    {
       source: '/(.*)',
       headers: [
         { key: 'X-Content-Type-Options', value: 'nosniff' },
