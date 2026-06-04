@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Layout from '../components/Layout';
-import StaffTab from '../components/admin/StaffTab';
+import AdminShell, { ACCENT, useAdminDark } from '../components/admin/AdminShell';
+import StaffTabContent from '../components/admin/StaffTab';
 import { apiFetch, photoUrl } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -13,18 +13,294 @@ async function fetchSilent(path, options) {
   }
 }
 
+function sec(dark) {
+  return dark ? 'text-white/50' : 'text-black/45';
+}
+
+function body(dark) {
+  return dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]';
+}
+
+function card(dark) {
+  return dark
+    ? 'border-2 border-white/15 bg-white/5 rounded-2xl'
+    : 'border-2 border-black/10 bg-black/[0.02] rounded-2xl';
+}
+
+function btnPrimary() {
+  return 'min-h-[46px] px-5 text-[15px] font-medium text-white rounded-2xl disabled:opacity-40 w-full';
+}
+
 function DashboardEmpty({ t, onAddResident }) {
+  const dark = useAdminDark();
   return (
-    <div className="py-16 px-4 text-center">
-      <p className="text-lg text-kinness-text font-medium">{t('dashboardSettingUp')}</p>
-      <p className="text-sm text-[#6B6B6B] mt-2">{t('dashboardEmptyHint')}</p>
+    <div className="px-4 py-10 text-center">
+      <p className={`text-[17px] font-medium ${body(dark)}`}>{t('dashboardSettingUp')}</p>
+      <p className={`text-[15px] mt-2 ${sec(dark)}`}>{t('dashboardEmptyHint')}</p>
       <button
         type="button"
         onClick={onAddResident}
-        className="mt-8 min-h-[48px] px-8 bg-kinness-primary text-white text-base font-semibold rounded-xl"
+        className={`mt-6 ${btnPrimary()}`}
+        style={{ backgroundColor: ACCENT }}
       >
         {t('addResident')}
       </button>
+    </div>
+  );
+}
+
+function Stat({ label, value, dark }) {
+  return (
+    <div className={`px-4 py-3 flex justify-between items-center ${card(dark)}`}>
+      <span className={`text-[16px] font-normal ${body(dark)}`}>{label}</span>
+      <span className="text-[26px] font-medium" style={{ color: ACCENT }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function AdminTabContent({
+  token,
+  tab,
+  loading,
+  message,
+  dashboard,
+  residents,
+  familyLinks,
+  staffData,
+  showDashboardEmpty,
+  goToAddResident,
+  residentForm,
+  setResidentForm,
+  familyEmail,
+  setFamilyEmail,
+  familyRel,
+  setFamilyRel,
+  saveResident,
+  removeResident,
+  inviteFamily,
+  loadStaff,
+}) {
+  const { t } = useLanguage();
+  const dark = useAdminDark();
+
+  if (tab === 'staff') {
+    return (
+      <StaffTabContent
+        token={token}
+        apiStaff={staffData.staff}
+        apiPending={staffData.pendingInvites}
+        onStaffMutated={loadStaff}
+      />
+    );
+  }
+
+  return (
+    <div className="px-4 pt-2 pb-5">
+      {message && (
+        <p className="text-[15px] font-medium mb-2" style={{ color: ACCENT }}>
+          {message}
+        </p>
+      )}
+
+      {loading && tab === 'dashboard' && (
+        <p className={`text-[16px] py-6 text-center ${sec(dark)}`}>{t('loading')}</p>
+      )}
+
+      {showDashboardEmpty && <DashboardEmpty t={t} onAddResident={goToAddResident} />}
+
+      {!loading && tab === 'dashboard' && dashboard && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={goToAddResident}
+            className={`text-[15px] font-medium mb-1 ${sec(dark)} hover:opacity-80`}
+            style={{ color: ACCENT }}
+          >
+            {t('addResident')}
+          </button>
+          <div className={`p-4 ${card(dark)}`}>
+            <p className={`text-[14px] font-medium ${sec(dark)}`}>{t('facility')}</p>
+            <p className={`text-[20px] font-medium mt-0.5 ${body(dark)}`}>{dashboard.facilityName}</p>
+            <p className={`text-[14px] font-medium mt-1 ${sec(dark)}`}>Code: {dashboard.facilityCode}</p>
+          </div>
+          <div className="space-y-2">
+            <Stat label={t('residentsCount')} value={dashboard.residentCount} dark={dark} />
+            <Stat label={t('familyLinked')} value={dashboard.familyCount} dark={dark} />
+            <Stat label={t('updatesToday')} value={dashboard.updatesToday} dark={dark} />
+          </div>
+        </div>
+      )}
+
+      {tab === 'residents' && (
+        <div>
+          {loading && <p className={`text-[16px] mb-2 ${sec(dark)}`}>{t('loading')}</p>}
+          <button
+            type="button"
+            onClick={() => setResidentForm({})}
+            className={`mb-2 ${btnPrimary()}`}
+            style={{ backgroundColor: ACCENT }}
+          >
+            {t('addResident')}
+          </button>
+
+          {residentForm && (
+            <form onSubmit={saveResident} className={`mb-3 p-3 space-y-2 ${card(dark)}`}>
+              <input
+                name="firstName"
+                placeholder={t('firstName')}
+                required
+                defaultValue={residentForm.first_name}
+                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
+                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
+                }`}
+              />
+              <input
+                name="lastName"
+                placeholder={t('lastName')}
+                required
+                defaultValue={residentForm.last_name}
+                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
+                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
+                }`}
+              />
+              <input
+                name="roomNumber"
+                placeholder={t('room')}
+                defaultValue={residentForm.room_number}
+                className={`w-full min-h-[44px] px-3 rounded-xl border-2 text-[16px] bg-transparent outline-none ${
+                  dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
+                }`}
+              />
+              <input type="file" name="photo" accept="image/*" className={`text-[15px] ${sec(dark)}`} />
+              <div className="flex gap-2">
+                <button type="submit" className={`flex-1 ${btnPrimary()}`} style={{ backgroundColor: ACCENT }}>
+                  {t('save')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResidentForm(null)}
+                  className={`min-h-[46px] px-4 text-[15px] font-medium rounded-2xl ${sec(dark)}`}
+                >
+                  {t('cancel')}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {!loading && residents.length === 0 && (
+            <p className={`text-[16px] ${sec(dark)}`}>{t('noResidents')}</p>
+          )}
+          <ul>
+            {residents.map((r) => (
+              <li
+                key={r.id}
+                className={`flex items-center gap-3 py-2 rounded-2xl ${dark ? 'hover:bg-white/5' : 'hover:bg-black/[0.03]'}`}
+              >
+                {r.photo_url ? (
+                  <img src={photoUrl(r.photo_url)} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-[15px] font-medium shrink-0"
+                    style={{ backgroundColor: '#E8E7FF', color: '#2D2A6E' }}
+                  >
+                    {r.first_name[0]}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[17px] font-medium truncate ${body(dark)}`}>
+                    {r.first_name} {r.last_name}
+                  </p>
+                  {r.room_number && (
+                    <p className={`text-[15px] font-normal ${sec(dark)}`}>
+                      {t('roomLabel')} {r.room_number}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setResidentForm(r)}
+                  className="text-[14px] font-medium min-h-[40px] px-1"
+                  style={{ color: ACCENT }}
+                >
+                  {t('editResident')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeResident(r.id)}
+                  className={`text-[14px] font-medium min-h-[40px] px-1 ${sec(dark)}`}
+                >
+                  {t('removeResident')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {tab === 'family' && (
+        <div>
+          {loading && <p className={`text-[16px] mb-2 ${sec(dark)}`}>{t('loading')}</p>}
+          <ul className="space-y-2">
+            {familyLinks.map((r) => (
+              <li key={r.id} className={`p-3 ${card(dark)}`}>
+                <p className={`text-[17px] font-medium mb-1.5 ${body(dark)}`}>
+                  {r.first_name} {r.last_name}
+                </p>
+                {r.familyMembers?.length > 0 && (
+                  <ul className="mb-2 space-y-1">
+                    {r.familyMembers.map((m) => (
+                      <li key={m.id} className={`text-[15px] font-normal ${sec(dark)}`}>
+                        {m.name} ({m.email}) — {m.relationship}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {r.pendingInvites?.map((p, i) => (
+                  <p key={i} className={`text-[14px] font-normal mb-2 ${sec(dark)}`}>
+                    {t('pendingInvite')}: {p.email}
+                  </p>
+                ))}
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div
+                    className={`flex items-stretch rounded-2xl overflow-hidden border-2 ${
+                      dark ? 'border-white/15 bg-white/5' : 'border-black/10 bg-black/[0.02]'
+                    }`}
+                  >
+                    <input
+                      type="email"
+                      placeholder={t('email')}
+                      value={familyEmail[r.id] || ''}
+                      onChange={(e) => setFamilyEmail((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                      className={`flex-1 min-h-[44px] px-3 text-[16px] bg-transparent outline-none ${
+                        dark ? 'text-white placeholder:text-white/30' : 'text-[#0a0a0a] placeholder:text-black/30'
+                      }`}
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={t('relationship')}
+                    value={familyRel[r.id] || ''}
+                    onChange={(e) => setFamilyRel((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                    className={`min-h-[44px] px-3 rounded-2xl border-2 text-[16px] bg-transparent outline-none ${
+                      dark ? 'border-white/15 text-white' : 'border-black/10 text-[#0a0a0a]'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => inviteFamily(r.id)}
+                    className={btnPrimary()}
+                    style={{ backgroundColor: ACCENT }}
+                  >
+                    {t('addFamilyEmail')}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -42,6 +318,7 @@ export default function AdminPanel({ user, token, onLogout }) {
   const [residentForm, setResidentForm] = useState(null);
   const [familyEmail, setFamilyEmail] = useState({});
   const [familyRel, setFamilyRel] = useState({});
+
   const loadDashboard = useCallback(async () => {
     const data = await fetchSilent('/api/admin/dashboard', { token });
     setDashboard(data?.dashboard ?? null);
@@ -145,166 +422,36 @@ export default function AdminPanel({ user, token, onLogout }) {
   const hasDashboardData = Boolean(dashboard?.facilityName);
   const showDashboardEmpty = !loading && tab === 'dashboard' && !hasDashboardData;
 
-  if (tab === 'staff') {
-    return (
-      <StaffTab
+  return (
+    <AdminShell
+      onLogout={onLogout}
+      tab={tab}
+      setTab={setTab}
+      tabs={tabs}
+      pageTitle={t('adminTitle')}
+    >
+      <AdminTabContent
         token={token}
-        onLogout={onLogout}
         tab={tab}
-        setTab={setTab}
-        tabs={tabs}
-        apiStaff={staffData.staff}
-        apiPending={staffData.pendingInvites}
-        onStaffMutated={loadStaff}
+        loading={loading}
+        message={message}
+        dashboard={dashboard}
+        residents={residents}
+        familyLinks={familyLinks}
+        staffData={staffData}
+        showDashboardEmpty={showDashboardEmpty}
+        goToAddResident={goToAddResident}
+        residentForm={residentForm}
+        setResidentForm={setResidentForm}
+        familyEmail={familyEmail}
+        setFamilyEmail={setFamilyEmail}
+        familyRel={familyRel}
+        setFamilyRel={setFamilyRel}
+        saveResident={saveResident}
+        removeResident={removeResident}
+        inviteFamily={inviteFamily}
+        loadStaff={loadStaff}
       />
-    );
-  }
-
-  return (
-    <Layout user={user} onLogout={onLogout} title={t('adminTitle')}>
-      <nav className="admin-tabs -mx-4 px-4 sm:mx-0 sm:px-0">
-        {tabs.map((tb) => (
-          <button
-            key={tb.id}
-            type="button"
-            onClick={() => setTab(tb.id)}
-            className={tab === tb.id ? 'tab active' : 'tab'}
-          >
-            {tb.label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="mt-4">
-        {message && <p className="mb-3 text-kinness-primary text-base">{message}</p>}
-        {loading && tab === 'dashboard' && (
-          <p className="text-base text-kinness-text/70 py-8 text-center">{t('loading')}</p>
-        )}
-
-        {showDashboardEmpty && <DashboardEmpty t={t} onAddResident={goToAddResident} />}
-
-        {!loading && tab === 'dashboard' && dashboard && (
-          <div className="space-y-3">
-            <div className="p-4 bg-kinness-accent/30 rounded-xl">
-              <p className="text-sm text-kinness-text/70">{t('facility')}</p>
-              <p className="text-xl font-semibold text-kinness-text">{dashboard.facilityName}</p>
-              <p className="text-sm text-kinness-text/70 mt-1">Code: {dashboard.facilityCode}</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              <Stat label={t('residentsCount')} value={dashboard.residentCount} />
-              <Stat label={t('familyLinked')} value={dashboard.familyCount} />
-              <Stat label={t('updatesToday')} value={dashboard.updatesToday} />
-            </div>
-          </div>
-        )}
-
-        {tab === 'residents' && (
-          <div>
-            {loading && <p className="text-base text-kinness-text/70 mb-4">{t('loading')}</p>}
-            <button
-              type="button"
-              onClick={() => setResidentForm({})}
-              className="mb-4 w-full min-h-[48px] bg-kinness-primary text-white font-semibold rounded-xl"
-            >
-              {t('addResident')}
-            </button>
-
-            {residentForm && (
-              <form onSubmit={saveResident} className="mb-6 p-4 border-2 border-kinness-accent rounded-xl space-y-3">
-                <input name="firstName" placeholder={t('firstName')} required defaultValue={residentForm.first_name} className="w-full min-h-[44px] px-3 border rounded-lg text-base" />
-                <input name="lastName" placeholder={t('lastName')} required defaultValue={residentForm.last_name} className="w-full min-h-[44px] px-3 border rounded-lg text-base" />
-                <input name="roomNumber" placeholder={t('room')} defaultValue={residentForm.room_number} className="w-full min-h-[44px] px-3 border rounded-lg text-base" />
-                <input type="file" name="photo" accept="image/*" className="text-base" />
-                <div className="flex gap-2">
-                  <button type="submit" className="flex-1 min-h-[44px] bg-kinness-primary text-white rounded-lg">{t('save')}</button>
-                  <button type="button" onClick={() => setResidentForm(null)} className="min-h-[44px] px-4">{t('cancel')}</button>
-                </div>
-              </form>
-            )}
-
-            {!loading && residents.length === 0 && (
-              <p className="text-base text-kinness-text/70">{t('noResidents')}</p>
-            )}
-            <ul className="space-y-3">
-              {residents.map((r) => (
-                <li key={r.id} className="flex items-center gap-3 p-3 border border-kinness-accent/60 rounded-xl">
-                  {r.photo_url ? (
-                    <img src={photoUrl(r.photo_url)} alt="" className="w-12 h-12 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-kinness-accent flex items-center justify-center font-semibold text-kinness-primary">
-                      {r.first_name[0]}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-base">{r.first_name} {r.last_name}</p>
-                    {r.room_number && <p className="text-sm text-kinness-text/70">{t('roomLabel')} {r.room_number}</p>}
-                  </div>
-                  <button type="button" onClick={() => setResidentForm(r)} className="min-h-[44px] px-2 text-kinness-primary text-sm">{t('editResident')}</button>
-                  <button type="button" onClick={() => removeResident(r.id)} className="min-h-[44px] px-2 text-kinness-text/60 text-sm">{t('removeResident')}</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {tab === 'family' && (
-          <div>
-            {loading && <p className="text-base text-kinness-text/70 mb-4">{t('loading')}</p>}
-            <ul className="space-y-6">
-              {familyLinks.map((r) => (
-                <li key={r.id} className="border border-kinness-accent/60 rounded-xl p-4">
-                  <p className="font-semibold text-base mb-2">{r.first_name} {r.last_name}</p>
-                  {r.familyMembers?.length > 0 && (
-                    <ul className="mb-3 text-sm space-y-1">
-                      {r.familyMembers.map((m) => (
-                        <li key={m.id} className="text-kinness-text/80">
-                          {m.name} ({m.email}) — {m.relationship}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {r.pendingInvites?.map((p, i) => (
-                    <p key={i} className="text-sm text-kinness-text/60">{t('pendingInvite')}: {p.email}</p>
-                  ))}
-                  <div className="flex flex-col gap-2 mt-2">
-                    <input
-                      type="email"
-                      placeholder={t('email')}
-                      value={familyEmail[r.id] || ''}
-                      onChange={(e) => setFamilyEmail((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                      className="min-h-[44px] px-3 border rounded-lg text-base"
-                    />
-                    <input
-                      type="text"
-                      placeholder={t('relationship')}
-                      value={familyRel[r.id] || ''}
-                      onChange={(e) => setFamilyRel((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                      className="min-h-[44px] px-3 border rounded-lg text-base"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => inviteFamily(r.id)}
-                      className="min-h-[44px] bg-kinness-primary text-white rounded-lg text-base"
-                    >
-                      {t('addFamilyEmail')}
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-      </div>
-    </Layout>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="p-4 bg-white border border-kinness-accent/60 rounded-xl flex justify-between items-center">
-      <span className="text-base text-kinness-text">{label}</span>
-      <span className="text-2xl font-bold text-kinness-primary">{value}</span>
-    </div>
+    </AdminShell>
   );
 }
