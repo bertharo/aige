@@ -137,6 +137,16 @@ function AppRoutes() {
   );
 }
 
+function App() {
+  return (
+    <LanguageProvider>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </LanguageProvider>
+  );
+}
+
 function AppShell() {
   const { langChosen, showPicker, chooseLanguage } = useLanguage();
 
@@ -149,16 +159,6 @@ function AppShell() {
       <InstallPrompt />
       <AppRoutes />
     </>
-  );
-}
-
-function App() {
-  return (
-    <LanguageProvider>
-      <BrowserRouter>
-        <AppShell />
-      </BrowserRouter>
-    </LanguageProvider>
   );
 }
 

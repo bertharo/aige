@@ -100,13 +100,26 @@ Toggle **English | 中文** (top right). Preference stored in `localStorage`. Up
 
 ## Deployment
 
-### Frontend (Vercel)
+### kinness.ai (marketing site)
 
-- Root directory: `frontend`
-- Build: `npm run build` (injects API proxy into `vercel.json` when `KINNESS_BACKEND_URL` is set)
-- Output: `build`
-- **Production env:** `KINNESS_BACKEND_URL=https://your-api.railway.app` (same-origin `/api` + `/uploads` proxy; enables feed offline cache in the service worker)
-- **Local dev:** `REACT_APP_API_URL=http://localhost:3000` in `frontend/.env`
+Vercel project for the public homepage — **Root Directory:** repo root (uses `/vercel.json` → builds `marketing/`).
+
+| Env | Purpose |
+|-----|---------|
+| `KINNESS_APP_URL` | URL of the CRA app deployment, e.g. `https://kinness-app.vercel.app` — proxies `/login`, `/admin`, etc. |
+
+After deploy, `/` shows the landing page; `/login` proxies to the app.
+
+### Product app (CRA PWA)
+
+Separate Vercel project — **Root Directory:** `frontend`
+
+| Env | Purpose |
+|-----|---------|
+| `KINNESS_BACKEND_URL` | API origin for `/api` proxy |
+| `REACT_APP_API_URL` | Optional explicit API URL |
+
+**Migration from a single deploy:** If `aige.vercel.app` currently serves the CRA app, create a second Vercel project for `frontend/`, set `KINNESS_APP_URL` on the marketing project to that URL, then switch the main domain to the marketing build.
 
 ### Backend (Railway / Render)
 
