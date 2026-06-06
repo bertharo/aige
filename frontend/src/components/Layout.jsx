@@ -1,45 +1,58 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import LanguageToggle from './LanguageToggle';
+import GlassBackground from './GlassBackground';
+import { LangChangeButton } from './LanguagePicker';
 import { useLanguage } from '../i18n/LanguageContext';
+import { AdminThemeContext, useAdminTheme } from './admin/AdminShell';
+import { FONT_STACK, glassBar } from '../theme';
 
-export default function Layout({ user, onLogout, children, title }) {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-
-  const homePath =
-    user?.role === 'admin' ? '/admin' : user?.role === 'staff' ? '/staff/post' : '/family/feed';
+export default function Layout({ onLogout, children, title }) {
+  const { t, openLanguagePicker } = useLanguage();
+  const { dark, toggleTheme } = useAdminTheme();
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="sticky top-0 z-40 bg-white border-b border-kinness-accent/50 shadow-sm">
-        <div className="max-w-lg mx-auto px-4 flex items-center justify-between h-14">
-          <button
-            type="button"
-            onClick={() => navigate(homePath)}
-            className="text-left min-h-[44px] flex flex-col justify-center"
-          >
-            <span className="font-semibold text-kinness-primary text-lg leading-tight">{t('appName')}</span>
-            <span className="text-xs text-kinness-text/70 hidden sm:block">{t('tagline')}</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <button
-              type="button"
-              onClick={onLogout}
-              className="min-h-[44px] px-3 text-sm text-kinness-text hover:text-kinness-primary"
+    <GlassBackground dark={dark}>
+      <div className="min-h-screen" style={{ fontFamily: FONT_STACK }}>
+        <header className={`sticky top-0 z-50 border-b ${glassBar(dark)}`}>
+          <div className="flex items-center justify-between h-11 px-4 max-w-[390px] mx-auto">
+            <span
+              className="text-[17px] font-medium tracking-tight"
+              style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
             >
-              {t('signOut')}
-            </button>
+              {t('appName')}
+            </span>
+            <div className="flex items-center gap-1">
+              <LangChangeButton dark={dark} onClick={openLanguagePicker} />
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={dark ? 'Light mode' : 'Dark mode'}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  dark ? 'bg-white/10 text-amber-300' : 'bg-black/5 text-[#1a1a1a]'
+                }`}
+              >
+                <span className="text-sm leading-none">{dark ? '☀️' : '🌙'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={onLogout}
+                className={`text-[13px] font-medium h-8 px-1.5 ${dark ? 'text-white/65' : 'text-black/50'}`}
+              >
+                {t('signOut')}
+              </button>
+            </div>
           </div>
-        </div>
-        {title && (
-          <div className="max-w-lg mx-auto px-4 pb-3">
-            <h1 className="text-xl font-semibold text-kinness-text">{title}</h1>
+        </header>
+        {title ? (
+          <div
+            className={`px-4 pt-2.5 pb-1 max-w-[390px] mx-auto ${dark ? 'text-[#fafafa]' : 'text-[#0a0a0a]'}`}
+          >
+            <h1 className="text-[18px] font-medium tracking-tight">{title}</h1>
           </div>
-        )}
-      </header>
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4">{children}</main>
-    </div>
+        ) : null}
+        <AdminThemeContext.Provider value={{ dark }}>
+          <main className="max-w-[390px] mx-auto px-4 py-3 pb-8">{children}</main>
+        </AdminThemeContext.Provider>
+      </div>
+    </GlassBackground>
   );
 }

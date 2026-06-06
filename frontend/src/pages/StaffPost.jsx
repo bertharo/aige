@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { useAdminDark } from '../components/admin/AdminShell';
 import { apiFetch } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
+import { ACCENT, btnAccentClass, glassField, glassPanel } from '../theme';
 
-export default function StaffPost({ user, token, onLogout }) {
+function StaffPostForm({ user, token }) {
   const { t } = useLanguage();
+  const dark = useAdminDark();
   const [residents, setResidents] = useState([]);
   const [residentId, setResidentId] = useState('');
   const [content, setContent] = useState('');
@@ -14,6 +17,9 @@ export default function StaffPost({ user, token, onLogout }) {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const label = dark ? 'text-white/70' : 'text-black/55';
+  const inputClass = `w-full min-h-[44px] px-3.5 text-[15px] outline-none bg-transparent ${dark ? 'text-white' : 'text-[#0a0a0a]'}`;
 
   useEffect(() => {
     apiFetch('/api/staff/residents', { token })
@@ -60,61 +66,68 @@ export default function StaffPost({ user, token, onLogout }) {
   };
 
   if (loading) {
-    return (
-      <Layout user={user} onLogout={onLogout} title={t('staffPostTitle')}>
-        <p className="text-base text-kinness-text/70">{t('loading')}</p>
-      </Layout>
-    );
+    return <p className={`text-[15px] ${label}`}>{t('loading')}</p>;
   }
 
   return (
-    <Layout user={user} onLogout={onLogout} title={t('staffPostTitle')}>
-      {success && (
-        <div className="mb-4 p-4 bg-kinness-accent/50 border-2 border-kinness-primary rounded-xl text-kinness-primary text-base font-medium" role="status">
+    <>
+      {success ? (
+        <div
+          className={`mb-4 px-3.5 py-2.5 text-[14px] font-medium ${glassPanel(dark)}`}
+          style={{ color: ACCENT }}
+          role="status"
+        >
           {t('postSuccess')}
         </div>
-      )}
+      ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="resident" className="block text-base font-medium text-kinness-text mb-2">
+          <label htmlFor="resident" className={`block text-[14px] font-medium mb-1.5 ${label}`}>
             {t('selectResident')}
           </label>
-          <select
-            id="resident"
-            value={residentId}
-            onChange={(e) => setResidentId(e.target.value)}
-            required
-            className="w-full min-h-[48px] px-4 text-base border-2 border-kinness-accent rounded-xl bg-white"
-          >
-            <option value="">—</option>
-            {residents.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.first_name} {r.last_name}
-                {r.room_number ? ` (${t('roomLabel')} ${r.room_number})` : ''}
-              </option>
-            ))}
-          </select>
+          <div className={glassField(dark)}>
+            <select
+              id="resident"
+              value={residentId}
+              onChange={(e) => setResidentId(e.target.value)}
+              required
+              className={`${inputClass} appearance-none`}
+            >
+              <option value="">—</option>
+              {residents.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.first_name} {r.last_name}
+                  {r.room_number ? ` (${t('roomLabel')} ${r.room_number})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-base font-medium text-kinness-text mb-2">
+          <label htmlFor="content" className={`block text-[14px] font-medium mb-1.5 ${label}`}>
             {t('newUpdate')}
           </label>
-          <textarea
-            id="content"
-            rows={5}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={t('updatePlaceholder', { name: residentName || '…' })}
-            required
-            className="w-full px-4 py-3 text-base border-2 border-kinness-accent rounded-xl focus:border-kinness-primary focus:outline-none resize-none"
-          />
+          <div className={glassField(dark)}>
+            <textarea
+              id="content"
+              rows={5}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={t('updatePlaceholder', { name: residentName || '…' })}
+              required
+              className={`${inputClass} py-3 resize-none`}
+            />
+          </div>
         </div>
 
         <div>
-          <label className="block w-full min-h-[48px]">
-            <span className="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-kinness-primary text-kinness-primary text-base font-medium rounded-xl cursor-pointer">
+          <label className={`block w-full min-h-[44px] ${glassField(dark)} cursor-pointer`}>
+            <span
+              className="flex items-center justify-center gap-2 w-full py-3 text-[14px] font-medium"
+              style={{ color: ACCENT }}
+            >
               {t('addPhoto')}
             </span>
             <input
@@ -125,21 +138,36 @@ export default function StaffPost({ user, token, onLogout }) {
               className="sr-only"
             />
           </label>
-          {photoPreview && (
+          {photoPreview ? (
             <img src={photoPreview} alt="" className="mt-3 w-full rounded-xl max-h-48 object-cover" />
-          )}
+          ) : null}
         </div>
 
-        {error && <p className="text-red-600 text-base" role="alert">{error}</p>}
+        {error ? (
+          <p className="text-[15px] text-red-500" role="alert">
+            {error}
+          </p>
+        ) : null}
 
         <button
           type="submit"
           disabled={posting || !residentId}
-          className="w-full min-h-[52px] bg-kinness-primary text-white text-lg font-bold rounded-xl disabled:opacity-50"
+          className={`w-full ${btnAccentClass()}`}
+          style={{ backgroundColor: ACCENT }}
         >
           {posting ? t('posting') : t('postUpdate')}
         </button>
       </form>
+    </>
+  );
+}
+
+export default function StaffPost({ user, token, onLogout }) {
+  const { t } = useLanguage();
+
+  return (
+    <Layout user={user} onLogout={onLogout} title={t('staffPostTitle')}>
+      <StaffPostForm user={user} token={token} />
     </Layout>
   );
 }
