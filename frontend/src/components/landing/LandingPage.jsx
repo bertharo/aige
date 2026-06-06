@@ -310,12 +310,18 @@ export default function LandingPage() {
               Kinness — the family connection platform for elder care.
             </p>
             <div className="flex gap-4 mt-4">
-              <a href="#" className="text-[13px] font-medium text-landing-muted hover:text-landing-accent-dark transition-colors">
+              <button
+                type="button"
+                className="text-[13px] font-medium text-landing-muted hover:text-landing-accent-dark transition-colors"
+              >
                 Privacy policy
-              </a>
-              <a href="#" className="text-[13px] font-medium text-landing-muted hover:text-landing-accent-dark transition-colors">
+              </button>
+              <button
+                type="button"
+                className="text-[13px] font-medium text-landing-muted hover:text-landing-accent-dark transition-colors"
+              >
                 Terms
-              </a>
+              </button>
             </div>
           </div>
           <p className="text-[13px] text-landing-muted sm:text-right">© 2026 Kinness</p>
