@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-kinness-page text-[#1a1a18] font-sans antialiased;
+}
+
+/* HeroMockup animations */
+@keyframes hero-mockup-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-mockup-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-mockup-heart-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.hero-mockup-enter {
+  animation: hero-mockup-enter 600ms ease-out both;
+}
+
+.hero-mockup-card {
+  opacity: 0;
+  animation: hero-mockup-card-in 500ms ease-out both;
+}
+
+.hero-mockup-card-1 {
+  animation-delay: 200ms;
+}
+
+.hero-mockup-card-2 {
+  animation-delay: 350ms;
+}
+
+.hero-mockup-card-3 {
+  animation-delay: 500ms;
+}
+
+.hero-mockup-heart-pulse {
+  animation: hero-mockup-heart-pulse 2s ease-in-out infinite;
+  transform-origin: center;
+}

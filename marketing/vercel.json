@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "rewrites": [
+    { "source": "/login", "destination": "https://aige.vercel.app/login" },
+    { "source": "/login/:path*", "destination": "https://aige.vercel.app/login/:path*" },
+    { "source": "/register", "destination": "https://aige.vercel.app/register" },
+    { "source": "/admin", "destination": "https://aige.vercel.app/admin" },
+    { "source": "/admin/:path*", "destination": "https://aige.vercel.app/admin/:path*" },
+    { "source": "/staff/:path*", "destination": "https://aige.vercel.app/staff/:path*" },
+    { "source": "/family/:path*", "destination": "https://aige.vercel.app/family/:path*" }
+  ]
+}
