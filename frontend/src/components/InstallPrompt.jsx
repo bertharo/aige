@@ -9,10 +9,10 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [visible, setVisible] = useState(false);
 
-  const onAuthPage = pathname === '/login' || pathname === '/register';
+  const onPublicPage = pathname === '/' || pathname === '/login' || pathname === '/register';
 
   useEffect(() => {
-    if (onAuthPage || localStorage.getItem('kinness_install_dismissed')) return;
+    if (onPublicPage || localStorage.getItem('kinness_install_dismissed')) return;
 
     const handler = (e) => {
       e.preventDefault();
@@ -29,7 +29,7 @@ export default function InstallPrompt() {
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, [onAuthPage]);
+  }, [onPublicPage]);
 
   const dismiss = () => {
     localStorage.setItem('kinness_install_dismissed', '1');
@@ -45,7 +45,7 @@ export default function InstallPrompt() {
     dismiss();
   };
 
-  if (!visible || onAuthPage) return null;
+  if (!visible || onPublicPage) return null;
 
   return (
     <div
