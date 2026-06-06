@@ -4,9 +4,9 @@ module.exports = {
     extend: {
       colors: {
         kinness: {
-          primary: '#2D6A4F',
-          accent: '#95D5B2',
-          text: '#1B1B1B',
+          primary: '#5A4FF7',
+          accent: '#EEEDFE',
+          text: '#0a0a0a',
         },
         landing: {
           accent: '#5B4FE8',

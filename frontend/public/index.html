@@ -15,6 +15,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" rel="stylesheet" />
     <title>Kiness — Your family, always close.</title>
+    <script>
+      (function () {
+        var KEY = 'kinness_build_id';
+        fetch('/build-id.json?_=' + Date.now(), { cache: 'no-store' })
+          .then(function (res) {
+            return res.ok ? res.json() : null;
+          })
+          .then(function (data) {
+            if (!data || !data.buildId) return;
+            var prev = localStorage.getItem(KEY);
+            if (prev && prev !== data.buildId) {
+              localStorage.setItem(KEY, data.buildId);
+              var reload = function () {
+                location.reload();
+              };
+              if (!('serviceWorker' in navigator)) {
+                reload();
+                return;
+              }
+              navigator.serviceWorker
+                .getRegistrations()
+                .then(function (regs) {
+                  return Promise.all(regs.map(function (r) {
+                    return r.unregister();
+                  }));
+                })
+                .then(function () {
+                  if ('caches' in window) {
+                    return caches.keys().then(function (keys) {
+                      return Promise.all(
+                        keys.map(function (k) {
+                          return caches.delete(k);
+                        })
+                      );
+                    });
+                  }
+                })
+                .then(reload)
+                .catch(reload);
+            } else if (!prev) {
+              localStorage.setItem(KEY, data.buildId);
+            }
+          })
+          .catch(function () {});
+      })();
+    </script>
   </head>
   <body>
     <noscript>Kiness needs JavaScript enabled to run.</noscript>
