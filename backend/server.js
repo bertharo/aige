@@ -20,6 +20,13 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+/** Trim + lowercase only — do not use normalizeEmail() (strips Gmail dots and breaks seeded family accounts). */
+function sanitizeEmail(email) {
+  return String(email).trim().toLowerCase();
+}
+
+const validateEmailField = body('email').trim().isEmail().customSanitizer(sanitizeEmail);
+
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -167,7 +174,7 @@ app.get('/health', (_req, res) => {
 
 const validateRegistration = [
   body('name').trim().isLength({ min: 2 }),
-  body('email').isEmail().normalizeEmail(),
+  validateEmailField,
   body('password').isLength({ min: 8 }),
   body('facilityCode').trim().notEmpty(),
 ];
@@ -185,7 +192,7 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Facility code not recognized — ask your care home for the correct code' });
     }
 
-    if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
+    if (db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email)) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
 
@@ -228,7 +235,7 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
 });
 
 app.post('/api/auth/login', [
-  body('email').isEmail().normalizeEmail(),
+  validateEmailField,
   body('password').notEmpty(),
 ], async (req, res) => {
   try {
@@ -237,7 +244,7 @@ app.post('/api/auth/login', [
       return res.status(400).json({ success: false, message: 'Please enter a valid email and password' });
     }
 
-    const email = String(req.body.email).trim().toLowerCase();
+    const email = sanitizeEmail(req.body.email);
     const { password } = req.body;
     const row = db.prepare('SELECT * FROM users WHERE lower(email) = ?').get(email);
     if (!row || !(await bcrypt.compare(password, row.password))) {

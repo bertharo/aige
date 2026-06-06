@@ -24,8 +24,8 @@ npm run seed:reset    # clears DB and loads full demo dataset
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@sunrisegardens.com | Admin1234! |
-| Staff | sarah@sunrisegardens.com | Staff1234! |
-| Family | jenny.chen@gmail.com | Family1234! |
+| Staff | sarah@sunrisegardens.com, david@sunrisegardens.com, aisha@sunrisegardens.com | Staff1234! |
+| Family | jenny.chen@gmail.com (+ 7 others in `seed.js`) | Family1234! |
 
 Facility code: **SGSL2024** — 8 residents, 20 updates over the last 7 days.
 
@@ -100,7 +100,7 @@ Toggle **English | 中文** (top right). Preference stored in `localStorage`. Up
 
 ## Deployment
 
-### kinness.ai (marketing site)
+### kiness.ai (marketing site)
 
 Vercel project for the public homepage — **Root Directory:** repo root (uses `/vercel.json` → builds `marketing/`).
 

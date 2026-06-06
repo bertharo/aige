@@ -42,14 +42,31 @@ curl https://aige-backend.onrender.com/health
 
 Remove old Prisma variables (`DATABASE_URL`) — they are not used.
 
-## Demo login (Kiness v2 only)
+## Demo login
 
-- **Admin:** `admin@kinness.app` / `admin12345`
-- **Facility code (register):** `KINNESS2024`
+Production auto-loads the **Sunrise Gardens** dataset (`SGSL2024`) on startup if missing.
+
+| Role | Email | Password | After login |
+|------|-------|----------|-------------|
+| Admin | admin@sunrisegardens.com | Admin1234! | `/admin` |
+| Staff | sarah@sunrisegardens.com | Staff1234! | `/staff/post` |
+| Staff | david@sunrisegardens.com | Staff1234! | `/staff/post` |
+| Staff | aisha@sunrisegardens.com | Staff1234! | `/staff/post` |
+| Family | jenny.chen@gmail.com | Family1234! | `/family/feed` |
+| Family | michael.j@gmail.com, kenji.n@gmail.com, etc. | Family1234! | `/family/feed` |
+
+**Facility code (register):** `SGSL2024`
+
+**Legacy pilot** (only if the DB was never migrated to Sunrise seed):
+
+- Admin: `admin@kinness.app` / `admin12345`
+- Facility code: `KINNESS2024`
 
 If login returns **401** with message `"Invalid email or password"` → you are still on the **old** AIGE server (redeploy).
 
 Kiness v2 returns: `"Email or password is incorrect"`.
+
+Gmail family addresses must be typed **with dots** as seeded (e.g. `jenny.chen@gmail.com`) — do not rely on Gmail’s dot-insensitive matching; the API stores the exact address from seed.
 
 ### Still on old backend?
 
