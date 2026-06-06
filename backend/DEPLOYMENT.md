@@ -1,6 +1,6 @@
-# Kinness Backend — Render Deployment
+# Kiness Backend — Render Deployment
 
-Your Render service must run the **Kinness v2** backend (`kinness-backend` in `package.json`), not the old Prisma AIGE server.
+Your Render service must run the **Kiness v2** backend (`kinness-backend` in `package.json`), not the old Prisma AIGE server.
 
 ## Verify deployed version
 
@@ -8,9 +8,9 @@ Your Render service must run the **Kinness v2** backend (`kinness-backend` in `p
 curl https://aige-backend.onrender.com/health
 ```
 
-**Correct (Kinness v2):**
+**Correct (Kiness v2):**
 ```json
-{"status":"OK","service":"Kinness Backend","version":"2.0.0","database":"sqlite",...}
+{"status":"OK","service":"Kiness Backend","version":"2.0.0","database":"sqlite",...}
 ```
 
 **Wrong (old AIGE — redeploy required):**
@@ -42,20 +42,20 @@ curl https://aige-backend.onrender.com/health
 
 Remove old Prisma variables (`DATABASE_URL`) — they are not used.
 
-## Demo login (Kinness v2 only)
+## Demo login (Kiness v2 only)
 
 - **Admin:** `admin@kinness.app` / `admin12345`
 - **Facility code (register):** `KINNESS2024`
 
 If login returns **401** with message `"Invalid email or password"` → you are still on the **old** AIGE server (redeploy).
 
-Kinness v2 returns: `"Email or password is incorrect"`.
+Kiness v2 returns: `"Email or password is incorrect"`.
 
 ### Still on old backend?
 
 Render → **Manual Deploy** → **Clear build cache & deploy** from `main`.
 
-### After Kinness deploy — force pilot accounts
+### After Kiness deploy — force pilot accounts
 
 Set `SETUP_SECRET` on Render, then:
 

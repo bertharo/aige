@@ -26,7 +26,7 @@ async function parseJsonResponse(res) {
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('text/html') || text.trimStart().startsWith('<!')) {
     throw new Error(
-      'Could not reach the Kinness server. If you are hosting the app, set KINNESS_BACKEND_URL on Vercel. For local dev, run the backend on port 3000.'
+      'Could not reach the Kiness server. If you are hosting the app, set KINNESS_BACKEND_URL on Vercel. For local dev, run the backend on port 3000.'
     );
   }
 

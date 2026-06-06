@@ -147,7 +147,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-white border-b border-[#E8E7E4]/80">
         <div className="max-w-site mx-auto px-5 sm:px-8 h-14 flex items-center justify-between gap-4">
           <a href="#" className="text-[18px] font-medium text-kinness-accent-dark tracking-tight">
-            Kinness
+            Kiness
           </a>
           <nav className="flex items-center gap-3 sm:gap-5">
             <a
@@ -186,7 +186,7 @@ export default function LandingPage() {
                 Your family, always close.
               </h1>
               <p className="text-[16px] leading-relaxed text-kinness-muted max-w-lg mb-8">
-                Kinness connects families to loved ones in assisted living — through daily updates, real moments, and
+                Kiness connects families to loved ones in assisted living — through daily updates, real moments, and
                 the reassurance that someone is watching over them.
               </p>
 
@@ -241,7 +241,7 @@ export default function LandingPage() {
           </div>
           <p className="text-center text-[16px] leading-relaxed text-[#1a1a18]/85 max-w-2xl mx-auto">
             Families are flying blind. Facilities rely on phone calls and paper binders. The daily moments — the smile
-            at breakfast, the walk to the garden — disappear. Kinness captures them.
+            at breakfast, the walk to the garden — disappear. Kiness captures them.
           </p>
         </section>
 
@@ -270,7 +270,7 @@ export default function LandingPage() {
                 Your transparency is your differentiator.
               </h3>
               <p className="text-[15px] leading-relaxed text-kinness-muted flex-1 mb-6">
-                Families choosing between facilities pick the one that keeps them in the loop. Kinness is a selling
+                Families choosing between facilities pick the one that keeps them in the loop. Kiness is a selling
                 point, a compliance tool, and a complaint-reduction system — all in one.
               </p>
               <a
@@ -291,7 +291,7 @@ export default function LandingPage() {
                 Feel present, even from a distance.
               </h3>
               <p className="text-[15px] leading-relaxed text-kinness-muted flex-1 mb-6">
-                You can&apos;t always visit. But you can always know. Kinness gives you a real window into your loved
+                You can&apos;t always visit. But you can always know. Kiness gives you a real window into your loved
                 one&apos;s day — not just &ldquo;they&apos;re doing fine.&rdquo;
               </p>
               <a
@@ -309,7 +309,7 @@ export default function LandingPage() {
           <div className="max-w-site mx-auto px-5 sm:px-8 py-16 sm:py-20 text-center">
             <h2 className="font-serif text-[32px] sm:text-[36px] text-kinness-accent-dark mb-3">Be first.</h2>
             <p className="text-[16px] text-kinness-muted max-w-md mx-auto mb-8">
-              Kinness is in pilot. Join the waitlist and we&apos;ll reach out when we&apos;re ready for you.
+              Kiness is in pilot. Join the waitlist and we&apos;ll reach out when we&apos;re ready for you.
             </p>
             <WaitlistForm id="footer" roles={ROLES_WAITLIST} />
           </div>
@@ -320,9 +320,9 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-[#E8E7E4]">
         <div className="max-w-site mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
           <div>
-            <p className="text-[16px] font-medium text-kinness-accent-dark mb-1">Kinness</p>
+            <p className="text-[16px] font-medium text-kinness-accent-dark mb-1">Kiness</p>
             <p className="text-[14px] text-kinness-muted max-w-xs">
-              Kinness — the family connection platform for elder care.
+              Kiness — the family connection platform for elder care.
             </p>
             <div className="flex gap-4 mt-4">
               <a href="#" className="text-[13px] font-medium text-kinness-muted hover:text-kinness-accent-dark transition-colors">
@@ -333,7 +333,7 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-          <p className="text-[13px] text-kinness-muted sm:text-right">© 2026 Kinness</p>
+          <p className="text-[13px] text-kinness-muted sm:text-right">© 2026 Kiness</p>
         </div>
       </footer>
     </div>

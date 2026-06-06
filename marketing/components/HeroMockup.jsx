@@ -18,7 +18,7 @@ export default function HeroMockup() {
             className="w-1.5 h-1.5 rounded-full bg-[#5B4FE8] shrink-0"
             aria-hidden
           />
-          <span className="text-[12px] font-medium text-[#3C3489]">Kinness</span>
+          <span className="text-[12px] font-medium text-[#3C3489]">Kiness</span>
         </div>
 
         {/* Feed */}

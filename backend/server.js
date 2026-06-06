@@ -120,7 +120,7 @@ function timeAgo(dateStr) {
 }
 
 app.get('/', (_req, res) => {
-  res.json({ message: 'Kinness API is running', version: '2.0.0' });
+  res.json({ message: 'Kiness API is running', version: '2.0.0' });
 });
 
 // One-time pilot setup (set SETUP_SECRET on Render, then POST with header x-setup-secret)
@@ -156,7 +156,7 @@ app.get('/health', (_req, res) => {
   }
   res.json({
     status: dbOk ? 'OK' : db ? 'DEGRADED' : 'STARTING',
-    service: 'Kinness Backend',
+    service: 'Kiness Backend',
     version: '2.0.0',
     database: dbOk ? 'sqlite' : db ? 'error' : 'starting',
     timestamp: new Date().toISOString(),
@@ -216,7 +216,7 @@ app.post('/api/auth/register', validateRegistration, async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Welcome to Kinness!',
+      message: 'Welcome to Kiness!',
       user,
       token,
       redirect: role === 'admin' ? '/admin' : role === 'staff' ? '/staff/post' : '/family/feed',
@@ -600,12 +600,12 @@ async function startServer() {
   db = await initDatabase({ skipAutoSeed: isProd, quiet: isProd });
   await ensureDemoData();
   app.listen(PORT, () => {
-    console.log(`Kinness API running on port ${PORT}`);
+    console.log(`Kiness API running on port ${PORT}`);
   });
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start Kinness API:', err);
+  console.error('Failed to start Kiness API:', err);
   process.exit(1);
 });
 

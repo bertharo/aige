@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    appName: 'Kinness',
+    appName: 'Kiness',
     tagline: 'Keeping Families Connected',
     signIn: 'Sign In',
     signUp: 'Sign Up',
@@ -54,7 +54,7 @@ export const translations = {
     relationship: 'Relationship',
     inviteSent: 'Invite ready — they can register with your facility code',
     loading: 'Loading…',
-    installTitle: 'Add Kinness to your home screen',
+    installTitle: 'Add Kiness to your home screen',
     installBody: 'Get quick access to updates about your loved one',
     installButton: 'Add to Home Screen',
     installDismiss: 'Not now',
@@ -79,7 +79,7 @@ export const translations = {
     dashboardEmptyHint: 'Add your first resident to get started',
   },
   zh: {
-    appName: 'Kinness',
+    appName: 'Kiness',
     tagline: '连接家人，温暖相伴',
     signIn: '登录',
     signUp: '注册',
@@ -133,7 +133,7 @@ export const translations = {
     relationship: '关系',
     inviteSent: '邀请已就绪 — 对方可用机构代码注册',
     loading: '加载中…',
-    installTitle: '将 Kinness 添加到主屏幕',
+    installTitle: '将 Kiness 添加到主屏幕',
     installBody: '快速查看您亲人的最新动态',
     installButton: '添加到主屏幕',
     installDismiss: '暂不',

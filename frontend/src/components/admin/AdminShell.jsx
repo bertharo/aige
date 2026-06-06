@@ -32,7 +32,7 @@ function TopBar({ dark, onToggleTheme, onLogout, t, onLanguage }) {
           className="text-[17px] font-medium tracking-tight"
           style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
         >
-          Kinness
+          Kiness
         </span>
         <div className="flex items-center gap-1">
           <LangChangeButton dark={dark} onClick={onLanguage} />

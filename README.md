@@ -1,6 +1,6 @@
-# Kinness — Keeping Families Connected
+# Kiness — Keeping Families Connected
 
-Kinness helps elder care facilities share photo and text updates with families. Staff post in under a minute; families get an email and see updates in a warm, mobile-first feed.
+Kiness helps elder care facilities share photo and text updates with families. Staff post in under a minute; families get an email and see updates in a warm, mobile-first feed.
 
 ## Project structure
 
@@ -94,7 +94,7 @@ Toggle **English | 中文** (top right). Preference stored in `localStorage`. Up
 
 ## PWA
 
-- `manifest.json` — add to home screen as **Kinness**
+- `manifest.json` — add to home screen as **Kiness**
 - Service worker — caches static assets; feed also cached in `localStorage` when offline
 - Install prompt on first visit
 

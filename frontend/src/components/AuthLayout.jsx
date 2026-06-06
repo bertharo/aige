@@ -14,7 +14,7 @@ export default function AuthLayout({ children }) {
         style={{ fontFamily: FONT_STACK }}
       >
         <header className={`sticky top-0 z-40 flex items-center justify-between h-12 px-4 border-b border-black/[0.05] bg-white/50 backdrop-blur-2xl`}>
-          <span className="text-[18px] font-medium tracking-tight text-[#0a0a0a]">Kinness</span>
+          <span className="text-[18px] font-medium tracking-tight text-[#0a0a0a]">Kiness</span>
           <LangChangeButton dark={false} onClick={openLanguagePicker} />
         </header>
         <div className="flex-1 flex flex-col justify-center px-4 py-5 pb-10">

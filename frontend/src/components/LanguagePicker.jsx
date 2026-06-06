@@ -18,7 +18,7 @@ export default function LanguagePicker({ onChoose }) {
         style={{ fontFamily: FONT_STACK }}
       >
         <p className="text-[13px] font-medium text-black/40 text-center tracking-wide uppercase mb-2">
-          Kinness
+          Kiness
         </p>
         <h1 className="text-[26px] font-medium text-[#0a0a0a] text-center leading-tight mb-1">
           {t('chooseLanguage')}

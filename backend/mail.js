@@ -33,7 +33,7 @@ async function sendUpdateNotification({ familyEmails, residentName, facilityName
       <h2 style="color: #2D6A4F;">A new update for ${residentName}</h2>
       <p style="font-size: 16px; line-height: 1.6;">${content.replace(/\n/g, '<br>')}</p>
       <p><a href="${feedUrl}" style="display: inline-block; background: #2D6A4F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">View family feed</a></p>
-      <p style="color: #666; font-size: 14px;">— ${facilityName} via Kinness</p>
+      <p style="color: #666; font-size: 14px;">— ${facilityName} via Kiness</p>
     </div>
   `;
 
