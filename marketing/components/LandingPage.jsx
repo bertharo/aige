@@ -47,19 +47,40 @@ function WaitlistForm({ id, roles, onSuccess, compact = false }) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState(roles[0].value);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { firstName, email, role, source: id };
-    console.log('[kinness waitlist]', payload);
-    setSubmitted(true);
-    onSuccess?.();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, email, role }),
+      });
+      const data = await res.json();
+
+      if (data.status === 'success' || data.status === 'already_registered') {
+        setSubmitted(true);
+        onSuccess?.();
+        return;
+      }
+
+      setError(data.message || 'Something went wrong. Try again.');
+    } catch {
+      setError('Something went wrong. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
     return (
       <p className={`text-[16px] font-medium text-kinness-accent-dark ${compact ? 'py-2' : 'py-6 text-center'}`}>
-        You&apos;re on the list. We&apos;ll be in touch soon.
+        You&apos;re on the list. We&apos;ll be in touch.
       </p>
     );
   }
@@ -81,6 +102,7 @@ function WaitlistForm({ id, roles, onSuccess, compact = false }) {
             onChange={(e) => setFirstName(e.target.value)}
             className={inputClass}
             autoComplete="given-name"
+            disabled={loading}
           />
         </label>
         <label className="block">
@@ -94,6 +116,7 @@ function WaitlistForm({ id, roles, onSuccess, compact = false }) {
             onChange={(e) => setEmail(e.target.value)}
             className={inputClass}
             autoComplete="email"
+            disabled={loading}
           />
         </label>
       </div>
@@ -104,6 +127,7 @@ function WaitlistForm({ id, roles, onSuccess, compact = false }) {
           value={role}
           onChange={(e) => setRole(e.target.value)}
           className={`${inputClass} appearance-none`}
+          disabled={loading}
         >
           {roles.map((r) => (
             <option key={r.value} value={r.value}>
@@ -114,10 +138,16 @@ function WaitlistForm({ id, roles, onSuccess, compact = false }) {
       </label>
       <button
         type="submit"
-        className={`w-full h-11 rounded-xl bg-kinness-accent text-white text-[15px] font-medium transition-opacity hover:opacity-90 ${compact ? '' : ''}`}
+        disabled={loading}
+        className={`w-full h-11 rounded-xl bg-kinness-accent text-white text-[15px] font-medium transition-opacity hover:opacity-90 disabled:opacity-60 ${compact ? '' : ''}`}
       >
-        {compact ? 'Join the waitlist' : 'Get early access'}
+        {loading ? 'Saving...' : compact ? 'Join the waitlist' : 'Get early access'}
       </button>
+      {error ? (
+        <p className="text-[14px] text-[#A32D2D]" role="alert">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

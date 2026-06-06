@@ -1,6 +1,6 @@
-# Kiness marketing site (kinness.ai)
+# Kiness marketing site (kiness.ai)
 
-Next.js App Router landing page for kinness.ai. The product app (CRA) lives in `../frontend` and is proxied for `/login`, `/admin`, etc.
+Next.js App Router landing page for kiness.ai. The product app (CRA) lives in `../frontend` and is proxied for `/login`, `/admin`, etc.
 
 ## Develop
 
