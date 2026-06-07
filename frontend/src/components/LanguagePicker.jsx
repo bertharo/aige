@@ -1,45 +1,77 @@
 import React from 'react';
 import GlassBackground from './GlassBackground';
 import { useLanguage } from '../i18n/LanguageContext';
+import { LANGUAGES } from '../i18n/languages';
 import { FONT_STACK, glassPanel } from '../theme';
 
-const OPTIONS = [
-  { code: 'en', title: 'English', subtitle: 'United States' },
-  { code: 'zh', title: '中文', subtitle: '简体中文' },
-];
+const ACCENT = '#5B4FE8';
 
-export default function LanguagePicker({ onChoose }) {
-  const { t } = useLanguage();
+export default function LanguagePicker({ onChoose, onClose }) {
+  const { t, lang } = useLanguage();
 
   return (
     <GlassBackground dark={false}>
       <div
-        className="min-h-screen flex flex-col justify-center px-6 max-w-[390px] mx-auto"
+        className="min-h-screen flex flex-col justify-end sm:justify-center px-4 pb-6 sm:px-6 max-w-[390px] mx-auto"
         style={{ fontFamily: FONT_STACK }}
       >
-        <p className="text-[13px] font-medium text-black/40 text-center tracking-wide uppercase mb-2">
-          Kiness
-        </p>
-        <h1 className="text-[26px] font-medium text-[#0a0a0a] text-center leading-tight mb-1">
-          {t('chooseLanguage')}
-        </h1>
-        <p className="text-[17px] font-normal text-black/45 text-center mb-8">{t('chooseLanguageSub')}</p>
+        <div className={`w-full p-4 sm:p-5 ${glassPanel(false)} bg-white/80`}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[13px] font-medium text-black/40 tracking-wide uppercase">Kiness</p>
+              <h1 className="text-[20px] font-medium text-[#0a0a0a] leading-tight mt-0.5">
+                {t('chooseLanguage')}
+              </h1>
+            </div>
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-black/5 text-black/50 text-lg leading-none"
+                aria-label={t('cancel')}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+          <p className="text-[14px] font-normal text-black/45 mb-4">{t('chooseLanguageSub')}</p>
 
-        <div className="space-y-3">
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.code}
-              type="button"
-              onClick={() => onChoose(opt.code)}
-              className={`w-full text-left px-4 py-3 transition-transform active:scale-[0.99] ${glassPanel(false)}`}
-            >
-              <span className="block text-[18px] font-medium text-[#0a0a0a]">{opt.title}</span>
-              <span className="block text-[14px] font-normal text-black/45 mt-0.5">{opt.subtitle}</span>
-            </button>
-          ))}
+          <ul className="space-y-1 max-h-[50vh] overflow-y-auto scrollbar-hide" role="listbox">
+            {LANGUAGES.map(({ code, label }) => {
+              const active = lang === code;
+              return (
+                <li key={code}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => onChoose(code)}
+                    className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-left transition-colors ${
+                      active ? 'bg-[#EEEDFE]' : 'hover:bg-black/[0.03]'
+                    }`}
+                  >
+                    <span className="text-[16px] font-medium text-[#0a0a0a]">{label}</span>
+                    {active ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                        <path
+                          d="M5 12l5 5L20 7"
+                          stroke={ACCENT}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      <span className="w-[18px]" aria-hidden />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <p className="text-[12px] text-black/35 text-center mt-4">{t('changeLanguageHint')}</p>
         </div>
-
-        <p className="text-[13px] text-black/35 text-center mt-8">{t('changeLanguageHint')}</p>
       </div>
     </GlassBackground>
   );

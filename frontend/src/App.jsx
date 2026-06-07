@@ -150,11 +150,11 @@ function App() {
 }
 
 function AppShell() {
-  const { langChosen, showPicker, chooseLanguage } = useLanguage();
+  const { langChosen, showPicker, chooseLanguage, closeLanguagePicker } = useLanguage();
   const location = useLocation();
   const isPublicPage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
 
-  if ((!langChosen || showPicker) && !isPublicPage) {
+  if (!langChosen && !isPublicPage) {
     return <LanguagePicker onChoose={chooseLanguage} />;
   }
 
@@ -162,6 +162,11 @@ function AppShell() {
     <>
       <InstallPrompt />
       <AppRoutes />
+      {showPicker && !isPublicPage ? (
+        <div className="fixed inset-0 z-[100]">
+          <LanguagePicker onChoose={chooseLanguage} onClose={closeLanguagePicker} />
+        </div>
+      ) : null}
     </>
   );
 }

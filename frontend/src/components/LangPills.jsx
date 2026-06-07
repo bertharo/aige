@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { LANGUAGES } from '../i18n/languages';
 import { ACCENT } from '../theme';
 
 export default function LangPills({ dark = false, compact = false }) {
@@ -7,23 +8,23 @@ export default function LangPills({ dark = false, compact = false }) {
 
   return (
     <div
-      className={`flex rounded-full p-0.5 font-medium ${compact ? 'text-[13px]' : 'text-[14px]'} ${
+      className={`flex flex-wrap gap-1 rounded-full p-0.5 font-medium ${compact ? 'text-[12px]' : 'text-[13px]'} ${
         dark ? 'bg-white/10' : 'bg-black/5'
       }`}
       role="group"
       aria-label={t('language')}
     >
-      {['en', 'zh'].map((code) => (
+      {LANGUAGES.map(({ code, label }) => (
         <button
           key={code}
           type="button"
           onClick={() => setLang(code)}
-          className={`px-2.5 py-1 rounded-full transition-colors duration-200 ${
-            compact ? 'min-h-[30px]' : 'min-h-[32px]'
+          className={`px-2 py-1 rounded-full transition-colors duration-200 ${
+            compact ? 'min-h-[28px]' : 'min-h-[30px]'
           } ${lang === code ? 'text-white' : dark ? 'text-white/50' : 'text-black/45'}`}
           style={lang === code ? { backgroundColor: ACCENT } : undefined}
         >
-          {code === 'en' ? 'EN' : '中文'}
+          {label}
         </button>
       ))}
     </div>
