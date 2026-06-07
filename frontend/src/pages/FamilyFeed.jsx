@@ -8,7 +8,7 @@ import { FamilyProvider } from '../components/family/FamilyContext';
 
 export default function FamilyFeed({ user, token, onLogout }) {
   const [tab, setTab] = useState('feed');
-  const userName = user?.name || 'Jenny Chen';
+  const userName = user?.name || 'Jenny Haro';
 
   return (
     <FamilyProvider token={token}>

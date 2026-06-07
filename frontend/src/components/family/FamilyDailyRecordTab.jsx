@@ -95,7 +95,7 @@ function formatHeaderDate(date) {
 }
 
 function possessiveFirst(name) {
-  const first = (name || 'Mary').split(' ')[0];
+  const first = (name || 'Rosa').split(' ')[0];
   return first.endsWith('s') ? `${first}'` : `${first}'s`;
 }
 

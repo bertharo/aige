@@ -87,7 +87,7 @@ cd backend && npm run seed:reset    # wipe + reload
 |------|-------|----------|
 | **Admin** | `admin@sunrisegardens.com` | `Admin1234!` |
 | **Staff** | `sarah@sunrisegardens.com`, `david@sunrisegardens.com`, `aisha@sunrisegardens.com` | `Staff1234!` |
-| **Family** | `jenny.chen@gmail.com` (+ 7 others in `seed.js`) | `Family1234!` |
+| **Family** | `jenny.haro@gmail.com` (+ 7 others in `seed.js`) | `Family1234!` |
 
 **Facility code (register):** `SGSL2024`
 
@@ -150,7 +150,7 @@ Custom React i18n — no third-party library.
 |-----|--------|-------|
 | **Feed** | ✅ Live API | Real updates from backend; pull-to-refresh; offline cache |
 | **Calendar** | 🟡 UI + placeholder | Weekly strip, facility events, family visits, schedule-visit modal (`console.log`) |
-| **Daily Record** | 🟡 UI + placeholder | Meals, mood, activities, staff note for Mary Chen |
+| **Daily Record** | 🟡 UI + placeholder | Meals, mood, activities, staff note for Rosa Haro |
 | **Photos** | 🟡 UI + placeholder | Month grid, picsum placeholders, swipe lightbox |
 
 Family shell: `#F0EFFB` background, white cards, indigo accent — separate from admin glass theme.

@@ -52,7 +52,7 @@ Production auto-loads the **Sunrise Gardens** dataset (`SGSL2024`) on startup if
 | Staff | sarah@sunrisegardens.com | Staff1234! | `/staff/post` |
 | Staff | david@sunrisegardens.com | Staff1234! | `/staff/post` |
 | Staff | aisha@sunrisegardens.com | Staff1234! | `/staff/post` |
-| Family | jenny.chen@gmail.com | Family1234! | `/family/feed` |
+| Family | jenny.haro@gmail.com | Family1234! | `/family/feed` |
 | Family | michael.j@gmail.com, kenji.n@gmail.com, etc. | Family1234! | `/family/feed` |
 
 **Facility code (register):** `SGSL2024`
@@ -66,7 +66,7 @@ If login returns **401** with message `"Invalid email or password"` → you are 
 
 Kiness v2 returns: `"Email or password is incorrect"`.
 
-Gmail family addresses must be typed **with dots** as seeded (e.g. `jenny.chen@gmail.com`) — do not rely on Gmail’s dot-insensitive matching; the API stores the exact address from seed.
+Gmail family addresses must be typed **with dots** as seeded (e.g. `jenny.haro@gmail.com`) — do not rely on Gmail’s dot-insensitive matching; the API stores the exact address from seed.
 
 ### Still on old backend?
 

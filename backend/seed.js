@@ -24,7 +24,7 @@ const FACILITY = {
 };
 
 const RESIDENTS = [
-  { first: 'Mary', last: 'Chen', room: '12', unit: 'Assisted Living' },
+  { first: 'Rosa', last: 'Haro', room: '12', unit: 'Assisted Living' },
   { first: 'Robert', last: 'Johnson', room: '7', unit: 'Memory Care' },
   { first: 'Helen', last: 'Nakamura', room: '3', unit: 'Assisted Living' },
   { first: 'George', last: 'Williams', room: '15', unit: 'Memory Care' },
@@ -41,7 +41,7 @@ const STAFF = [
 ];
 
 const FAMILIES = [
-  { name: 'Jenny Chen', email: 'jenny.chen@gmail.com', password: 'Family1234!', resident: 'Mary Chen', relationship: 'Daughter' },
+  { name: 'Jenny Haro', email: 'jenny.haro@gmail.com', password: 'Family1234!', resident: 'Rosa Haro', relationship: 'Daughter' },
   { name: 'Michael Johnson', email: 'michael.j@gmail.com', password: 'Family1234!', resident: 'Robert Johnson', relationship: 'Son' },
   { name: 'Kenji Nakamura', email: 'kenji.n@gmail.com', password: 'Family1234!', resident: 'Helen Nakamura', relationship: 'Son' },
   { name: 'Patricia Williams', email: 'patricia.w@gmail.com', password: 'Family1234!', resident: 'George Williams', relationship: 'Daughter' },
@@ -52,7 +52,7 @@ const FAMILIES = [
 ];
 
 const UPDATES = [
-  { day: 1, period: 'morning', resident: 'Mary Chen', staff: 'Sarah', content: 'Mary had a wonderful morning — she finished her whole breakfast and spent time sitting in the garden. She was cheerful and mentioned she is looking forward to Jenny visiting soon.' },
+  { day: 1, period: 'morning', resident: 'Rosa Haro', staff: 'Sarah', content: 'Rosa was up before breakfast asking if Jenny had called yet. She finished her pozole and said it tasted like home, then sat on the patio humming a song her mother used to sing in Guadalajara. She pointed at the bougainvillea and told me it looks just like the ones outside her old house.' },
   { day: 1, period: 'afternoon', resident: 'Robert Johnson', staff: 'David', content: 'Robert was restless after lunch today but calmed down once we put on some classic jazz. He tapped along to the music and eventually dozed off in his chair. Peaceful afternoon overall.' },
   { day: 1, period: 'morning', resident: 'Helen Nakamura', staff: 'Aisha', content: 'Helen joined the chair yoga class for the first time this morning. She did really well and told me she wants to come back next week. Big smile on her face after.' },
   { day: 1, period: 'evening', resident: 'George Williams', staff: 'Sarah', content: 'George had a calm day. Ate well at both meals and spent the afternoon watching TV in the common room. Staff checked in every hour. No concerns.' },
@@ -60,7 +60,7 @@ const UPDATES = [
   { day: 2, period: 'morning', resident: 'Frank Deluca', staff: 'Aisha', content: 'Frank had a good morning. He asked to go outside so we sat on the patio for about 30 minutes. He talked about his old neighborhood in San Francisco and seemed really happy reminiscing.' },
   { day: 2, period: 'afternoon', resident: 'Mei Lin', staff: 'Sarah', content: 'Mei Lin was quiet today but engaged. She participated in the afternoon art activity and painted a small watercolor. Staff kept it to show her family.' },
   { day: 2, period: 'morning', resident: 'James Okafor', staff: 'David', content: 'James had a great breakfast and then spent the morning reading in the common room. He got into a long conversation with another resident about basketball and was laughing a lot.' },
-  { day: 3, period: 'evening', resident: 'Mary Chen', staff: 'Aisha', content: "Mary's appetite was a little lower than usual at dinner tonight but she drank all her water and had some fruit. We will keep an eye on it tomorrow. Otherwise she was in good spirits." },
+  { day: 3, period: 'evening', resident: 'Rosa Haro', staff: 'Aisha', content: "Rosa barely touched her plate until we brought out the caldo — then she had two bowls and asked for more bread. She wrapped her flan in a napkin and put it in the fridge with a note that said 'para Jenny.' She went to bed saying Sunday cannot come fast enough." },
   { day: 3, period: 'morning', resident: 'Robert Johnson', staff: 'Sarah', content: 'Robert had a better day today. He recognized a staff member by name this morning which was a nice moment. Ate well at lunch and slept soundly after.' },
   { day: 3, period: 'afternoon', resident: 'Helen Nakamura', staff: 'David', content: 'Helen asked about her son Kenji several times today. We showed her a photo and she lit up. She was calm and content for the rest of the afternoon.' },
   { day: 4, period: 'morning', resident: 'George Williams', staff: 'Aisha', content: 'George joined the music hour today for the first time. He seemed to enjoy the singing and clapped along. A staff member sat with him the whole time.' },
@@ -68,7 +68,7 @@ const UPDATES = [
   { day: 4, period: 'afternoon', resident: 'Frank Deluca', staff: 'David', content: "Frank skipped lunch today — said he wasn't hungry. We offered a snack later and he had some soup and crackers. Will monitor tomorrow. He seemed tired but not distressed." },
   { day: 5, period: 'morning', resident: 'Mei Lin', staff: 'Aisha', content: 'Mei Lin slept well last night and woke up in good spirits. She ate a full breakfast and sat in the garden for a while this morning. Very peaceful day.' },
   { day: 5, period: 'evening', resident: 'James Okafor', staff: 'Sarah', content: 'James got a care package from his daughter Amara today. He was so happy — showed everyone the snacks and shared them with the table at dinner. Made his whole week.' },
-  { day: 6, period: 'morning', resident: 'Mary Chen', staff: 'David', content: 'Mary did her physical therapy exercises this morning with no complaints. The therapist said she is making good progress. She was tired afterward but in good spirits.' },
+  { day: 6, period: 'morning', resident: 'Rosa Haro', staff: 'David', content: "Rosa rolled into PT with her walker and announced she was ready to waltz. She finished the whole session without stopping once, then asked the therapist to play a ranchera next time. On the way out she said she is saving her good dress for Jenny's wedding — whenever that day comes, she plans to be ready." },
   { day: 6, period: 'evening', resident: 'Robert Johnson', staff: 'Aisha', content: 'Robert had a difficult evening — he was confused and anxious around 7pm. Staff stayed close and played soft music which helped him settle. He was asleep by 8:30. We will note this for the care team.' },
   { day: 7, period: 'morning', resident: 'Helen Nakamura', staff: 'Sarah', content: 'Helen baked cookies with the activity team today. She remembered her mother\'s recipe and guided everyone through it. She was proud and happy. Cookies were delicious.' },
   { day: 7, period: 'afternoon', resident: 'George Williams', staff: 'David', content: 'George had a quiet but good day today. He ate all three meals and spent time in the common area. He smiled when staff greeted him this morning — a small thing but it meant a lot.' },
@@ -246,7 +246,7 @@ function printSummary() {
   console.log('Login credentials:');
   console.log('  Admin:  admin@sunrisegardens.com / Admin1234!');
   console.log('  Staff:  sarah@sunrisegardens.com / Staff1234!');
-  console.log('  Family: jenny.chen@gmail.com / Family1234!');
+  console.log('  Family: jenny.haro@gmail.com / Family1234!');
   console.log('');
   console.log(`Facility code (registration): ${FACILITY_CODE}`);
 }

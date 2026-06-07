@@ -3,14 +3,75 @@ const { getDb, randomUUID } = require('./db');
 const FACILITY_CODE = 'SGSL2024';
 
 const ACTIVITY_SCHEDULES = [
+  { title: 'Morning Stretch', day: 1, time: '9:00 AM', location: 'Activity Room' },
   { title: 'Physical Therapy', day: 1, time: '10:00 AM', location: 'Room 4B' },
   { title: 'Afternoon Reading', day: 1, time: '2:00 PM', location: 'Library' },
+  { title: 'Garden Walk', day: 2, time: '10:30 AM', location: 'Garden' },
   { title: 'Bingo', day: 2, time: '2:00 PM', location: 'Main Hall' },
   { title: 'Music Session', day: 3, time: '11:00 AM', location: 'Sunroom' },
   { title: 'Physical Therapy', day: 4, time: '10:00 AM', location: 'Room 4B' },
   { title: 'Movie Night', day: 5, time: '6:00 PM', location: 'Main Hall' },
   { title: 'Morning Coffee Social', day: 6, time: '9:30 AM', location: 'Patio' },
   { title: 'Chapel / Reflection', day: 0, time: '10:00 AM', location: 'Chapel Room' },
+];
+
+const ROSA_PHOTO_POSTS = [
+  {
+    content:
+      'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
+    staffEmail: 'sarah@sunrisegardens.com',
+    daysAgo: 1,
+    url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80',
+  },
+  {
+    content:
+      'Took Rosa on a slow walk through the garden this afternoon. She stopped at the rose bushes for a long time and told me about the garden she kept for thirty years back home. She knows every flower by name.',
+    staffEmail: 'david@sunrisegardens.com',
+    daysAgo: 2,
+    url: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800&q=80',
+  },
+  {
+    content:
+      'Rosa finished her whole lunch today and asked for seconds of the soup. She saved her flan for later — said Jenny is coming Sunday and she wants to share it with her.',
+    staffEmail: 'aisha@sunrisegardens.com',
+    daysAgo: 3,
+    url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
+  },
+  {
+    content:
+      'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
+    staffEmail: 'sarah@sunrisegardens.com',
+    daysAgo: 4,
+    url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80',
+  },
+  {
+    content:
+      'Found Rosa in the sunroom this afternoon with her book. She is reading a novel in Spanish that her sister sent from Mexico. She did not want to stop — we had to remind her about dinner.',
+    staffEmail: 'david@sunrisegardens.com',
+    daysAgo: 5,
+    url: 'https://images.unsplash.com/photo-1512236258305-32fb110fdb01?w=800&q=80',
+  },
+  {
+    content:
+      'Music Wednesday is Rosa\'s favorite day. She knew every word of every Spanish song and was singing loud enough that people in the hallway stopped to listen. The whole room was smiling.',
+    staffEmail: 'aisha@sunrisegardens.com',
+    daysAgo: 6,
+    url: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=800&q=80',
+  },
+  {
+    content:
+      'Jenny came by Sunday afternoon and they sat together on the patio for almost two hours. Rosa was glowing the whole visit. When Jenny left Rosa said — that is the best medicine there is.',
+    staffEmail: 'sarah@sunrisegardens.com',
+    daysAgo: 9,
+    url: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=800&q=80',
+  },
+  {
+    content:
+      'Rosa joined the morning stretch group for the second week in a row. She jokes that she is training for a marathon. The group loves having her — she keeps everyone laughing.',
+    staffEmail: 'aisha@sunrisegardens.com',
+    daysAgo: 12,
+    url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
+  },
 ];
 
 function formatDate(d) {
@@ -53,7 +114,7 @@ function seedDailyRecords(db, residentId, staffId) {
       mood_evening: 'tired',
       activities: ['Physical Therapy', 'Afternoon Reading'],
       staff_note:
-        'Mary did her physical therapy exercises this morning with no complaints. The therapist said she is making good progress. She was tired afterward but in good spirits.',
+        'Rosa walked into PT calling herself "la atleta del jardín." She balanced longer than last week, then spent the afternoon in the library with her Spanish novel — we had to remind her twice that dinner was ready.',
     },
     {
       off: -1,
@@ -63,8 +124,9 @@ function seedDailyRecords(db, residentId, staffId) {
       hydration: 'fair',
       mood_morning: 'okay',
       mood_evening: 'good',
-      activities: ['Bingo'],
-      staff_note: 'Mary enjoyed bingo and chatted with friends. Ate most of lunch.',
+      activities: ['Music Session', 'Garden Walk'],
+      staff_note:
+        'Rosa led the whole room in a ranchera at Music Session — even the shy residents were clapping along. Afterward we did a slow garden walk and she named every rose like old friends from Guadalajara.',
     },
     {
       off: -2,
@@ -74,8 +136,9 @@ function seedDailyRecords(db, residentId, staffId) {
       hydration: 'good',
       mood_morning: 'good',
       mood_evening: 'good',
-      activities: ['Music Session', 'Afternoon Reading'],
-      staff_note: 'Mary sang along during music session. Good appetite at lunch and dinner.',
+      activities: ['Morning Stretch', 'Morning Coffee Social'],
+      staff_note:
+        'Rosa told the stretch group she is training for a marathon and had everyone laughing. She had her coffee on the patio and waved at every person who walked by like she was hosting at home.',
     },
     {
       off: -3,
@@ -85,8 +148,9 @@ function seedDailyRecords(db, residentId, staffId) {
       hydration: 'good',
       mood_morning: 'good',
       mood_evening: 'okay',
-      activities: ['Physical Therapy'],
-      staff_note: 'Steady day. Mary was a little quiet in the evening.',
+      activities: ['Garden Walk', 'Music Session'],
+      staff_note:
+        'Rosa spent twenty minutes at the rose bushes telling me which ones Jenny would love. She hummed all through lunch and said the soup today tasted like her mother\'s recipe.',
     },
     {
       off: -4,
@@ -97,7 +161,8 @@ function seedDailyRecords(db, residentId, staffId) {
       mood_morning: 'low',
       mood_evening: 'okay',
       activities: [],
-      staff_note: 'Mary skipped breakfast but picked up after lunch. We encouraged fluids.',
+      staff_note:
+        'Rosa was quiet this morning — said her knees were bothering her and she wanted to rest. She perked up after lunch when we put on Spanish guitar in the common room. She asked us to save her a seat by the window tomorrow.',
     },
     {
       off: -5,
@@ -107,8 +172,9 @@ function seedDailyRecords(db, residentId, staffId) {
       hydration: 'fair',
       mood_morning: 'okay',
       mood_evening: 'good',
-      activities: ['Morning Coffee Social'],
-      staff_note: 'Enjoyed coffee on the patio with other residents.',
+      activities: ['Morning Coffee Social', 'Afternoon Reading'],
+      staff_note:
+        'Rosa held court on the patio with her coffee, telling stories about the mercado in Guadalajara. She read in the sunroom until the light faded and said the book her sister sent is the best one she has had in years.',
     },
     {
       off: -6,
@@ -118,8 +184,9 @@ function seedDailyRecords(db, residentId, staffId) {
       hydration: 'good',
       mood_morning: 'good',
       mood_evening: 'good',
-      activities: ['Chapel / Reflection', 'Afternoon Reading'],
-      staff_note: 'Peaceful Sunday. Mary attended chapel and rested well.',
+      activities: ['Chapel / Reflection', 'Garden Walk'],
+      staff_note:
+        'Rosa sang softly during chapel — an old hymn her grandmother taught her. Afterward she wanted a slow walk through the garden and picked a small bouquet she said she would press for Jenny.',
     },
   ];
 
@@ -128,7 +195,31 @@ function seedDailyRecords(db, residentId, staffId) {
     const exists = db.prepare(
       'SELECT id FROM daily_records WHERE resident_id = ? AND record_date = ?'
     ).get(residentId, recordDate);
-    if (exists) continue;
+
+    const payload = [
+      t.breakfast,
+      t.lunch,
+      t.dinner,
+      t.hydration,
+      t.mood_morning,
+      t.mood_evening,
+      JSON.stringify(t.activities),
+      t.staff_note,
+      staffId,
+      residentId,
+      recordDate,
+    ];
+
+    if (exists) {
+      db.prepare(`
+        UPDATE daily_records SET
+          breakfast = ?, lunch = ?, dinner = ?, hydration = ?,
+          mood_morning = ?, mood_evening = ?, activities_attended = ?,
+          staff_note = ?, logged_by = ?, updated_at = datetime('now')
+        WHERE resident_id = ? AND record_date = ?
+      `).run(...payload);
+      continue;
+    }
 
     db.prepare(`
       INSERT INTO daily_records (
@@ -169,16 +260,16 @@ function seedFamilyVisits(db, residentId, jennyUserId) {
     {
       visit_date: formatDate(thisSaturday),
       visit_time: 'afternoon',
-      visitor_name: 'Jenny Chen',
+      visitor_name: 'Jenny Haro',
       status: 'confirmed',
-      notes: 'Bringing photos from home',
+      notes: 'Bringing photos from Guadalajara and Rosa\'s favorite pan dulce',
     },
     {
       visit_date: formatDate(lastTuesday),
       visit_time: 'afternoon',
-      visitor_name: 'Jenny Chen',
+      visitor_name: 'Jenny Haro',
       status: 'confirmed',
-      notes: '',
+      notes: 'Sat on the patio — Rosa talked about her garden back home the whole visit',
     },
   ];
 
@@ -207,63 +298,20 @@ function seedFamilyVisits(db, residentId, jennyUserId) {
   }
 }
 
-function seedPhotoUpdates(db, facilityId, residentId, staffByName) {
-  const photos = [
-    {
-      content:
-        'Mary enjoying her morning coffee on the patio. She was in great spirits and chatted with a few neighbors.',
-      staff: 'Sarah Reyes',
-      daysAgo: 1,
-      url: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=800&q=80',
-    },
-    {
-      content:
-        'Mary spent some time in the garden this afternoon. She stopped to smell the roses and said it reminded her of her backyard growing up.',
-      staff: 'David Park',
-      daysAgo: 2,
-      url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=800&q=80',
-    },
-    {
-      content:
-        'Mary finished her whole lunch today and even asked for seconds of the soup. A really good day.',
-      staff: 'Aisha Thompson',
-      daysAgo: 3,
-      url: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=800&q=80',
-    },
-    {
-      content:
-        'Mary worked hard in physical therapy this morning. The therapist said she is making real progress.',
-      staff: 'David Park',
-      daysAgo: 0,
-      url: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80',
-    },
-  ];
-
+function seedPhotoUpdates(db, facilityId, residentId, staffByEmail) {
   db.prepare(`
     DELETE FROM updates
-    WHERE resident_id = ? AND photo_url LIKE '%picsum.photos%'
+    WHERE resident_id = ? AND photo_url IS NOT NULL AND photo_url != ''
   `).run(residentId);
 
-  for (const p of photos) {
-    const staffId = staffByName[p.staff];
+  for (const p of ROSA_PHOTO_POSTS) {
+    const staffId = staffByEmail[p.staffEmail];
     if (!staffId) continue;
-
-    const dup = db.prepare(
-      'SELECT id FROM updates WHERE resident_id = ? AND content = ? LIMIT 1'
-    ).get(residentId, p.content);
 
     const d = new Date();
     d.setDate(d.getDate() - p.daysAgo);
     d.setHours(14, 30, 0, 0);
     const createdAt = d.toISOString().slice(0, 19).replace('T', ' ');
-
-    if (dup) {
-      db.prepare(`
-        UPDATE updates SET photo_url = ?, staff_user_id = ?, created_at = ?
-        WHERE id = ?
-      `).run(p.url, staffId, createdAt, dup.id);
-      continue;
-    }
 
     db.prepare(`
       INSERT INTO updates (id, facility_id, resident_id, staff_user_id, content, photo_url, created_at)
@@ -287,29 +335,29 @@ function seedFamilyExtras({ quiet = false } = {}) {
   ).get(FACILITY_CODE);
   if (!facility) return false;
 
-  const mary = db.prepare(`
+  const rosa = db.prepare(`
     SELECT id FROM residents WHERE facility_id = ? AND first_name = ? AND last_name = ?
-  `).get(facility.id, 'Mary', 'Chen');
-  if (!mary) return false;
+  `).get(facility.id, 'Rosa', 'Haro');
+  if (!rosa) return false;
 
   const jenny = db.prepare(
     'SELECT id FROM users WHERE lower(email) = ?'
-  ).get('jenny.chen@gmail.com');
+  ).get('jenny.haro@gmail.com');
 
-  const sarah = db.prepare('SELECT id, name FROM users WHERE lower(email) = ?').get('sarah@sunrisegardens.com');
-  const david = db.prepare('SELECT id, name FROM users WHERE lower(email) = ?').get('david@sunrisegardens.com');
-  const aisha = db.prepare('SELECT id, name FROM users WHERE lower(email) = ?').get('aisha@sunrisegardens.com');
-  const staffByName = {
-    'Sarah Reyes': sarah?.id,
-    'David Park': david?.id,
-    'Aisha Thompson': aisha?.id,
+  const sarah = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get('sarah@sunrisegardens.com');
+  const david = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get('david@sunrisegardens.com');
+  const aisha = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get('aisha@sunrisegardens.com');
+  const staffByEmail = {
+    'sarah@sunrisegardens.com': sarah?.id,
+    'david@sunrisegardens.com': david?.id,
+    'aisha@sunrisegardens.com': aisha?.id,
   };
   const defaultStaff = sarah?.id || david?.id || aisha?.id;
 
   seedActivitySchedules(db, facility.id);
-  seedDailyRecords(db, mary.id, defaultStaff);
-  if (jenny) seedFamilyVisits(db, mary.id, jenny.id);
-  seedPhotoUpdates(db, facility.id, mary.id, staffByName);
+  seedDailyRecords(db, rosa.id, defaultStaff);
+  if (jenny) seedFamilyVisits(db, rosa.id, jenny.id);
+  seedPhotoUpdates(db, facility.id, rosa.id, staffByEmail);
 
   if (!quiet) console.log('Family extras seeded (schedules, daily records, visits, photos)');
   return true;

@@ -25,9 +25,9 @@ async function main() {
     db.prepare(`
       INSERT INTO residents (id, facility_id, first_name, last_name, room_number)
       VALUES (?, ?, ?, ?, ?)
-    `).run(residentId, facility.id, 'Mary', 'Chen', '201');
+    `).run(residentId, facility.id, 'Rosa', 'Haro', '201');
     resident = db.prepare('SELECT * FROM residents WHERE id = ?').get(residentId);
-    console.log('Created demo resident: Mary Chen (Room 201)');
+    console.log('Created demo resident: Rosa Haro (Room 201)');
   }
 
   let userId;

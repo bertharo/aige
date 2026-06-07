@@ -69,7 +69,7 @@ function FeedSkeleton() {
 }
 
 function ResidentHeader({ name, facilityName }) {
-  const parts = (name || 'Mary Chen').split(' ');
+  const parts = (name || 'Rosa Haro').split(' ');
   const ini = parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -82,7 +82,7 @@ function ResidentHeader({ name, facilityName }) {
       </div>
       <div>
         <p className="text-[17px] font-medium leading-tight" style={{ color: FAMILY_TEXT }}>
-          {name || 'Mary Chen'}
+          {name || 'Rosa Haro'}
         </p>
         <p className="text-[12px] font-normal" style={{ color: FAMILY_MUTED }}>
           {facilityName || 'Sunrise Gardens'}
@@ -255,7 +255,7 @@ export default function FeedTab({ token, facilityName }) {
             No updates yet
           </p>
           <p className="text-[14px] font-normal mt-1" style={{ color: FAMILY_MUTED }}>
-            The care team will share {residentName?.split(' ')[0] || 'Mary'}&apos;s first update soon.
+            The care team will share {residentName?.split(' ')[0] || 'Rosa'}&apos;s first update soon.
           </p>
         </div>
       ) : null}

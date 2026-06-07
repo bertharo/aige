@@ -1,7 +1,7 @@
 /** Demo anchor: Wednesday June 3, 2026 */
 export const DEMO_TODAY = new Date(2026, 5, 3);
 
-export const RESIDENT_NAME = 'Mary Chen';
+export const RESIDENT_NAME = 'Rosa Haro';
 
 function dateKey(d) {
   const y = d.getFullYear();
@@ -33,12 +33,12 @@ export const CALENDAR_EVENTS = {
   },
   '2026-06-02': {
     facility: [
-      { id: 'f2', time: '2:00 PM', name: 'Bingo', location: 'Activity Room', status: 'Attended' },
+      { id: 'f2', time: '10:30 AM', name: 'Garden Walk', location: 'Garden', status: 'Attended' },
     ],
     family: [
       {
         id: 'v1',
-        visitor: 'Jenny Chen',
+        visitor: 'Jenny Haro',
         relationship: 'Daughter',
         time: '3:00 PM',
         duration: '1 hour',
@@ -48,7 +48,7 @@ export const CALENDAR_EVENTS = {
   },
   '2026-06-03': {
     facility: [
-      { id: 'f3', time: '11:00 AM', name: 'Music session', location: 'Common Room', status: 'Attended' },
+      { id: 'f3', time: '11:00 AM', name: 'Music Session', location: 'Sunroom', status: 'Attended' },
     ],
     family: [],
   },
@@ -60,7 +60,7 @@ export const CALENDAR_EVENTS = {
   },
   '2026-06-05': {
     facility: [
-      { id: 'f5', time: '6:00 PM', name: 'Movie night', location: 'Theater', status: 'Scheduled' },
+      { id: 'f5', time: '6:00 PM', name: 'Movie Night', location: 'Main Hall', status: 'Scheduled' },
     ],
     family: [],
   },
@@ -91,7 +91,7 @@ export const DAILY_RECORDS = {
       { name: 'Afternoon Reading', time: '2:00 PM', status: 'attended' },
     ],
     staffNote:
-      'Mary did her physical therapy exercises this morning with no complaints. The therapist said she is making good progress. She was tired afterward but in good spirits.',
+      'Rosa walked into PT calling herself "la atleta del jardín." She balanced longer than last week, then spent the afternoon in the library with her Spanish novel.',
   },
 };
 
@@ -101,36 +101,36 @@ export const PHOTO_TIMELINE = [
     date: '2026-06-06',
     monthLabel: 'June 2026',
     caption:
-      'Mary worked hard in physical therapy this morning. The therapist said she is making real progress.',
-    staff: 'David Park',
-    photo_url: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80',
+      'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
+    staff: 'Sarah Reyes',
+    photo_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80',
   },
   {
     id: 'p2',
     date: '2026-06-05',
     monthLabel: 'June 2026',
     caption:
-      'Mary enjoying her morning coffee on the patio. She was in great spirits and chatted with a few neighbors.',
-    staff: 'Sarah Reyes',
-    photo_url: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=800&q=80',
+      'Took Rosa on a slow walk through the garden this afternoon. She stopped at the rose bushes for a long time and told me about the garden she kept for thirty years back home.',
+    staff: 'David Park',
+    photo_url: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800&q=80',
   },
   {
     id: 'p3',
     date: '2026-06-04',
     monthLabel: 'June 2026',
     caption:
-      'Mary spent some time in the garden this afternoon. She stopped to smell the roses and said it reminded her of her backyard growing up.',
-    staff: 'David Park',
-    photo_url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=800&q=80',
+      'Rosa finished her whole lunch today and asked for seconds of the soup. She saved her flan for later — said Jenny is coming Sunday and she wants to share it with her.',
+    staff: 'Aisha Thompson',
+    photo_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
   },
   {
     id: 'p4',
     date: '2026-06-03',
     monthLabel: 'June 2026',
     caption:
-      'Mary finished her whole lunch today and even asked for seconds of the soup. A really good day.',
-    staff: 'Aisha Thompson',
-    photo_url: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=800&q=80',
+      'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
+    staff: 'Sarah Reyes',
+    photo_url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80',
   },
 ];
 

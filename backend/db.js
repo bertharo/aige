@@ -236,7 +236,7 @@ function seedIfEmpty() {
   db.prepare(`
     INSERT INTO residents (id, facility_id, first_name, last_name, room_number)
     VALUES (?, ?, ?, ?, ?)
-  `).run(randomUUID(), facilityId, 'Mary', 'Chen', '201');
+  `).run(randomUUID(), facilityId, 'Rosa', 'Haro', '201');
 
   console.log(`Seeded facility "${facilityCode}" with admin ${adminEmail}`);
 }
