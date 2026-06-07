@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, createContext, useContext } fr
 import { useLanguage } from '../../i18n/LanguageContext';
 import GlassBackground from '../GlassBackground';
 import { LangChangeButton } from '../LanguagePicker';
+import KinessLogo from '../KinessLogo';
 import { ACCENT, FONT_STACK, glassBar } from '../../theme';
 
 export { ACCENT };
@@ -28,12 +29,7 @@ function TopBar({ dark, onToggleTheme, onLogout, t, onLanguage }) {
   return (
     <header className={`sticky top-0 z-50 border-b ${glassBar(dark)}`}>
       <div className="flex items-center justify-between h-11 px-4 max-w-[390px] mx-auto">
-        <span
-          className="text-[17px] font-medium tracking-tight"
-          style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
-        >
-          Kiness
-        </span>
+        <KinessLogo size="sm" variant={dark ? 'white' : 'color'} />
         <div className="flex items-center gap-1">
           <LangChangeButton dark={dark} onClick={onLanguage} />
           <button

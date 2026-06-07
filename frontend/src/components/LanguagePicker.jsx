@@ -3,6 +3,7 @@ import GlassBackground from './GlassBackground';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LANGUAGES } from '../i18n/languages';
 import { FONT_STACK, glassPanel } from '../theme';
+import KinessLogo from './KinessLogo';
 
 const ACCENT = '#5B4FE8';
 
@@ -18,7 +19,7 @@ export default function LanguagePicker({ onChoose, onClose }) {
         <div className={`w-full p-4 sm:p-5 ${glassPanel(false)} bg-white/80`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-[13px] font-medium text-black/40 tracking-wide uppercase">Kiness</p>
+              <KinessLogo size="sm" />
               <h1 className="text-[20px] font-medium text-[#0a0a0a] leading-tight mt-0.5">
                 {t('chooseLanguage')}
               </h1>

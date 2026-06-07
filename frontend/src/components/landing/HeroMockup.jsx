@@ -1,3 +1,5 @@
+import KinessLogo from '../KinessLogo';
+
 export default function HeroMockup() {
   return (
     <div
@@ -14,11 +16,7 @@ export default function HeroMockup() {
       >
         {/* Status bar */}
         <div className="flex items-center justify-center gap-1.5 pt-4 pb-2 px-3">
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-[#5B4FE8] shrink-0"
-            aria-hidden
-          />
-          <span className="text-[12px] font-medium text-[#3C3489]">Kiness</span>
+          <KinessLogo size="sm" />
         </div>
 
         {/* Feed */}

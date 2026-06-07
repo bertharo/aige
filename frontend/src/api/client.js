@@ -68,6 +68,11 @@ export async function apiFetch(path, { token, method = 'GET', body, isFormData }
   }
 
   const data = await parseJsonResponse(res);
+  if (res.status === 401) {
+    localStorage.removeItem('kinness_session');
+    window.location.assign('/login');
+    throw new Error('Your session expired — please sign in again');
+  }
   if (!res.ok) {
     throw new Error(data.message || 'Request failed');
   }

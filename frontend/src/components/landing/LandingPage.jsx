@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroMockup from './HeroMockup';
+import KinessLogo from '../KinessLogo';
 import {
   IconBell,
   IconCheck,
@@ -140,8 +141,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-landing-page">
       <header className="sticky top-0 z-50 bg-white border-b border-[#E8E7E4]/80">
         <div className="max-w-landing mx-auto px-5 sm:px-8 h-14 flex items-center justify-between gap-4">
-          <Link to="/" className="text-[18px] font-medium text-landing-accent-dark tracking-tight">
-            Kiness
+          <Link to="/" className="inline-flex items-center">
+            <KinessLogo size="sm" />
           </Link>
           <nav className="flex items-center gap-3 sm:gap-5">
             <a
@@ -170,6 +171,9 @@ export default function LandingPage() {
         <section className="max-w-landing mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-16 sm:pb-20">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
+              <div className="mb-6">
+                <KinessLogo size="lg" />
+              </div>
               <span className="inline-block px-3 py-1 rounded-full bg-landing-accent-light text-landing-accent-dark text-[12px] font-medium mb-6">
                 Now in pilot
               </span>
@@ -305,7 +309,7 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-[#E8E7E4]">
         <div className="max-w-landing mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
           <div>
-            <p className="text-[16px] font-medium text-landing-accent-dark mb-1">Kiness</p>
+            <KinessLogo size="md" className="mb-2" />
             <p className="text-[14px] text-landing-muted max-w-xs">
               Kiness — the family connection platform for elder care.
             </p>

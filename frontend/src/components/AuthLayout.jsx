@@ -1,7 +1,8 @@
 import React from 'react';
 import GlassBackground from './GlassBackground';
 import { LangChangeButton } from './LanguagePicker';
-import { ACCENT, btnAccentClass, FONT_STACK, glassField, glassPanel } from '../theme';
+import KinessLogo from './KinessLogo';
+import { btnAccentClass, FONT_STACK, glassField, glassPanel } from '../theme';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export default function AuthLayout({ children }) {
@@ -13,11 +14,13 @@ export default function AuthLayout({ children }) {
         className="min-h-screen flex flex-col max-w-[390px] mx-auto w-full"
         style={{ fontFamily: FONT_STACK }}
       >
-        <header className={`sticky top-0 z-40 flex items-center justify-between h-12 px-4 border-b border-black/[0.05] bg-white/50 backdrop-blur-2xl`}>
-          <span className="text-[18px] font-medium tracking-tight text-[#0a0a0a]">Kiness</span>
+        <header className="sticky top-0 z-40 flex items-center justify-end h-12 px-4 border-b border-black/[0.05] bg-white/50 backdrop-blur-2xl">
           <LangChangeButton dark={false} onClick={openLanguagePicker} />
         </header>
         <div className="flex-1 flex flex-col justify-center px-4 py-5 pb-10">
+          <div className="flex justify-center mb-6">
+            <KinessLogo size="lg" />
+          </div>
           <div className={`${glassPanel(false)} px-5 py-6`}>
             <p className="text-[14px] font-medium text-black/45 mb-5 text-center">{t('tagline')}</p>
             {children}
@@ -41,5 +44,5 @@ export function authButtonClass() {
 }
 
 export function authButtonStyle() {
-  return { backgroundColor: ACCENT };
+  return { backgroundColor: '#5B4FE8' };
 }

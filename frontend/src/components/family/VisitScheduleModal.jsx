@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { apiFetch } from '../../api/client';
 import { FAMILY_ACCENT, FAMILY_MUTED, familyCardClass } from './familyTheme';
 
 const TIMES = [
@@ -7,12 +8,22 @@ const TIMES = [
   { value: 'evening', label: 'Evening (4pm – 7pm)' },
 ];
 
-export default function VisitScheduleModal({ open, onClose, userName, onSubmitted }) {
+export default function VisitScheduleModal({
+  open,
+  onClose,
+  userName,
+  residentId,
+  token,
+  onSubmitted,
+}) {
   const dialogRef = useRef(null);
   const firstFocusRef = useRef(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open) return undefined;
+    setError('');
     firstFocusRef.current?.focus();
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -45,18 +56,32 @@ export default function VisitScheduleModal({ open, onClose, userName, onSubmitte
 
   if (!open) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setError('');
     const fd = new FormData(e.target);
     const payload = {
-      date: fd.get('date'),
-      timeSlot: fd.get('timeSlot'),
-      name: fd.get('name'),
+      resident_id: residentId,
+      visit_date: fd.get('date'),
+      visit_time: fd.get('timeSlot'),
+      visitor_name: fd.get('name'),
       notes: fd.get('notes') || '',
     };
-    console.log('[kiness visit request]', payload);
-    onSubmitted();
-    onClose();
+
+    try {
+      const data = await apiFetch('/api/calendar/visit', {
+        token,
+        method: 'POST',
+        body: payload,
+      });
+      onSubmitted(data.visit || { ...payload, id: data.id, status: data.status });
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Could not schedule visit');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -133,10 +158,18 @@ export default function VisitScheduleModal({ open, onClose, userName, onSubmitte
               placeholder="Anything the care team should know?"
             />
           </label>
+
+          {error ? (
+            <p className="text-[14px] text-red-500" role="alert">
+              {error}
+            </p>
+          ) : null}
+
           <div className="flex gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
+              disabled={submitting}
               className="flex-1 h-11 rounded-xl text-[15px] font-medium border"
               style={{ borderColor: '#E5E3F8', color: FAMILY_MUTED }}
             >
@@ -144,10 +177,11 @@ export default function VisitScheduleModal({ open, onClose, userName, onSubmitte
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 rounded-xl text-[15px] font-medium text-white"
+              disabled={submitting || !residentId}
+              className="flex-1 h-11 rounded-xl text-[15px] font-medium text-white disabled:opacity-50"
               style={{ backgroundColor: FAMILY_ACCENT }}
             >
-              Request visit
+              {submitting ? 'Sending…' : 'Request visit'}
             </button>
           </div>
         </form>

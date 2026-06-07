@@ -388,7 +388,24 @@ app.get('/api/family/feed', authenticateToken, requireRole('family'), (req, res)
     unread: !readSet.has(u.id),
   }));
 
-  res.json({ success: true, feed });
+  const residents = db.prepare(`
+    SELECT r.id, r.first_name, r.last_name, fm.relationship
+    FROM family_members fm
+    JOIN residents r ON r.id = fm.resident_id
+    WHERE fm.user_id = ?
+    ORDER BY r.last_name, r.first_name
+    LIMIT 1
+  `).get(userId);
+
+  const resident = residents
+    ? {
+        id: residents.id,
+        name: `${residents.first_name} ${residents.last_name}`,
+        relationship: residents.relationship,
+      }
+    : null;
+
+  res.json({ success: true, feed, resident });
 });
 
 app.post('/api/family/feed/read', authenticateToken, requireRole('family'), (req, res) => {
@@ -584,28 +601,45 @@ app.post('/api/admin/invite-staff', authenticateToken, requireRole('admin'), (re
   res.json({ success: true, message: `Invite ready — ${email} can register with your facility code as staff` });
 });
 
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ success: false, message: 'Something went wrong — please try again' });
-});
-
-app.use('*', (_req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
 async function ensureDemoData() {
   const hasDemo = db.prepare('SELECT id FROM facilities WHERE upper(facility_code) = upper(?)').get('SGSL2024');
-  if (hasDemo) return;
-  console.log('Sunrise Gardens demo (SGSL2024) not found — loading seed data...');
-  const { runSeed } = require('./seed');
-  await runSeed({ quiet: true });
-  db = require('./db').getDb();
+  if (!hasDemo) {
+    console.log('Sunrise Gardens demo (SGSL2024) not found — loading seed data...');
+    const { runSeed } = require('./seed');
+    await runSeed({ quiet: true });
+    db = require('./db').getDb();
+  }
+  const { seedFamilyExtras } = require('./seedExtras');
+  seedFamilyExtras({ quiet: true });
+}
+
+function registerApiRoutes() {
+  const deps = { db, authenticateToken, requireRole, randomUUID };
+  const { registerCalendarRoutes } = require('./routes/calendar');
+  const { registerDailyRecordRoutes } = require('./routes/dailyRecord');
+  const { registerPhotosRoutes } = require('./routes/photos');
+  const { registerStaffRecordRoutes } = require('./routes/staffRecord');
+  registerCalendarRoutes(app, deps);
+  registerDailyRecordRoutes(app, deps);
+  registerPhotosRoutes(app, deps);
+  registerStaffRecordRoutes(app, deps);
 }
 
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
   db = await initDatabase({ skipAutoSeed: isProd, quiet: isProd });
   await ensureDemoData();
+  registerApiRoutes();
+
+  app.use((err, _req, res, _next) => {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Something went wrong — please try again' });
+  });
+
+  app.use('*', (_req, res) => {
+    res.status(404).json({ success: false, message: 'Route not found' });
+  });
+
   app.listen(PORT, () => {
     console.log(`Kiness API running on port ${PORT}`);
   });

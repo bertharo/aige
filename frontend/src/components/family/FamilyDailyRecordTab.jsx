@@ -1,114 +1,325 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { apiFetch } from '../../api/client';
 import DayStrip from './DayStrip';
+import { useFamily } from './FamilyContext';
+import { dateKey, daysWithCalendarDots } from './familyDateUtils';
 import {
-  DAILY_RECORDS,
-  DEMO_TODAY,
-  RESIDENT_NAME,
-  dateKey,
-  daysWithCalendarEvents,
-  getWeekDays,
-} from './familyPlaceholderData';
-import { FAMILY_ACCENT, FAMILY_MUTED, familyCardClass } from './familyTheme';
+  FAMILY_ACCENT,
+  FAMILY_ACCENT_LIGHT,
+  FAMILY_MUTED,
+  FAMILY_NOTE_BG,
+  FAMILY_TEXT,
+  familyCardClass,
+} from './familyTheme';
 
-function MealPill({ status }) {
-  const map = {
-    'Ate well': 'bg-emerald-50 text-emerald-700',
-    Partial: 'bg-amber-50 text-amber-700',
-    Skipped: 'bg-red-50 text-red-600',
-    '—': 'bg-gray-100 text-gray-500',
-  };
+const MEAL_LABELS = {
+  ate_well: 'Ate well',
+  partial: 'Partial',
+  skipped: 'Skipped',
+};
+
+const MEAL_STYLES = {
+  'Ate well': { bg: '#E8F5E9', text: '#2E7D32', dot: '#4CAF50' },
+  Partial: { bg: '#FFF8E1', text: '#F57F17', dot: '#FFC107' },
+  Skipped: { bg: '#FFEBEE', text: '#C62828', dot: '#EF5350' },
+  '—': { bg: '#F5F5F5', text: '#9E9E9E', dot: '#9E9E9E' },
+};
+
+const HYDRATION_STYLES = {
+  good: { label: 'Good', ...MEAL_STYLES['Ate well'] },
+  fair: { label: 'Fair', ...MEAL_STYLES.Partial },
+  low: { label: 'Low', ...MEAL_STYLES.Skipped },
+};
+
+const MOOD_LABELS = {
+  good: { emoji: '😊', label: 'Good' },
+  okay: { emoji: '😐', label: 'Okay' },
+  low: { emoji: '😔', label: 'Low' },
+  tired: { emoji: '😴', label: 'Tired' },
+};
+
+function StatusPill({ label, style }) {
+  const s = style || MEAL_STYLES['—'];
   return (
-    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${map[status] || map['—']}`}>
-      {status}
+    <span
+      className="inline-flex items-center gap-1.5 font-medium"
+      style={{
+        backgroundColor: s.bg,
+        color: s.text,
+        fontSize: '12px',
+        borderRadius: '8px',
+        padding: '4px 6px',
+      }}
+    >
+      <span
+        className="rounded-full shrink-0"
+        style={{ width: '6px', height: '6px', backgroundColor: s.dot }}
+      />
+      {label}
     </span>
   );
 }
 
 function ActivityIcon({ status }) {
-  if (status === 'attended') return <span className="text-emerald-600 text-[15px]">✓</span>;
-  if (status === 'missed') return <span className="text-red-500 text-[15px]">✕</span>;
-  return <span className="text-gray-400 text-[15px]">—</span>;
+  if (status === 'attended') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill={FAMILY_ACCENT} aria-hidden>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+      </svg>
+    );
+  }
+  if (status === 'missed') {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#EF5350" aria-hidden>
+        <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={FAMILY_MUTED} strokeWidth="1.75" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PulseCard() {
+  return (
+    <div className={`p-4 ${familyCardClass} animate-pulse`}>
+      <div className="h-20 bg-[#F0EFFB] rounded-lg" />
+    </div>
+  );
+}
+
+function formatHeaderDate(date) {
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function possessiveFirst(name) {
+  const first = (name || 'Mary').split(' ')[0];
+  return first.endsWith('s') ? `${first}'` : `${first}'s`;
 }
 
 export default function FamilyDailyRecordTab() {
-  const weekDays = useMemo(() => getWeekDays(DEMO_TODAY), []);
-  const eventDays = useMemo(() => daysWithCalendarEvents(weekDays), [weekDays]);
-  const [selected, setSelected] = useState(DEMO_TODAY);
+  const {
+    token,
+    residentId,
+    residentName,
+    selectedDate,
+    setSelectedDate,
+    selectedDateKey,
+    weekDays,
+    loadingResident,
+    residentError,
+    retryResident,
+  } = useFamily();
 
-  const record = DAILY_RECORDS[dateKey(selected)];
+  const [record, setRecord] = useState(null);
+  const [schedules, setSchedules] = useState([]);
+  const [visits, setVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const eventDays = useMemo(
+    () => daysWithCalendarDots(weekDays, schedules, visits),
+    [weekDays, schedules, visits]
+  );
+
+  const todayKey = dateKey(new Date());
+
+  const activityRows = useMemo(() => {
+    const attended = new Set(record?.activities_attended || []);
+    const dow = selectedDate.getDay();
+    const daySchedules = schedules.filter((s) => s.day_of_week === dow);
+    const isPast = selectedDateKey < todayKey;
+    const isFuture = selectedDateKey > todayKey;
+
+    if (daySchedules.length > 0) {
+      return daySchedules.map((s) => ({
+        name: s.title,
+        time: s.start_time,
+        status: isFuture ? 'upcoming' : attended.has(s.title) ? 'attended' : isPast ? 'missed' : 'upcoming',
+      }));
+    }
+    return (record?.activities_attended || []).map((name) => ({
+      name,
+      time: '',
+      status: 'attended',
+    }));
+  }, [record, schedules, selectedDate, selectedDateKey, todayKey]);
+
+  const loadCalendarMeta = useCallback(async () => {
+    if (!residentId) return;
+    try {
+      const data = await apiFetch(`/api/calendar/${residentId}`, { token });
+      setSchedules(data.schedules || []);
+      setVisits(data.visits || []);
+    } catch {
+      /* optional */
+    }
+  }, [residentId, token]);
+
+  const loadRecord = useCallback(async () => {
+    if (!residentId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiFetch(`/api/daily-record/${residentId}/${selectedDateKey}`, { token });
+      setRecord(data);
+    } catch (err) {
+      setError(err.message);
+      setRecord(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [residentId, selectedDateKey, token]);
+
+  useEffect(() => {
+    loadCalendarMeta();
+  }, [loadCalendarMeta]);
+
+  useEffect(() => {
+    loadRecord();
+  }, [loadRecord]);
+
+  if (loadingResident) {
+    return (
+      <div className="space-y-3">
+        <div className="h-6 w-32 bg-white/70 rounded animate-pulse" />
+        <div className="h-16 bg-white/70 rounded-xl animate-pulse" />
+        <PulseCard />
+      </div>
+    );
+  }
+
+  if (residentError) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-[14px] mb-3" style={{ color: '#C62828' }}>
+          {residentError}
+        </p>
+        <button type="button" onClick={retryResident} className="text-[14px] font-medium" style={{ color: FAMILY_ACCENT }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <p className="text-[13px] font-normal" style={{ color: FAMILY_MUTED }}>
-        Daily report · {RESIDENT_NAME}
-      </p>
-
-      <DayStrip days={weekDays} selected={selected} onSelect={setSelected} eventDays={eventDays} />
-
-      {!record ? (
-        <p className="text-[14px] font-normal py-8 text-center" style={{ color: FAMILY_MUTED }}>
-          No report logged for this day yet.
+    <div className="space-y-3">
+      <header className="mb-1">
+        <h1 className="text-[20px] font-medium" style={{ color: FAMILY_TEXT }}>
+          {possessiveFirst(residentName)} Day
+        </h1>
+        <p className="text-[13px] font-normal mt-0.5" style={{ color: FAMILY_MUTED }}>
+          {formatHeaderDate(selectedDate)}
         </p>
+      </header>
+
+      <DayStrip days={weekDays} selected={selectedDate} onSelect={setSelectedDate} eventDays={eventDays} />
+
+      {error ? (
+        <div className="text-center py-4">
+          <p className="text-[14px] mb-2" style={{ color: '#C62828' }}>
+            {error}
+          </p>
+          <button type="button" onClick={loadRecord} className="text-[14px] font-medium" style={{ color: FAMILY_ACCENT }}>
+            Retry
+          </button>
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="space-y-3">
+          <PulseCard />
+          <PulseCard />
+        </div>
       ) : (
         <div className="space-y-3">
           <div className={`p-4 ${familyCardClass}`}>
-            <h3 className="text-[14px] font-medium text-[#1a1a24] mb-3">Meals</h3>
-            {['Breakfast', 'Lunch', 'Dinner'].map((meal) => {
-              const key = meal.toLowerCase();
-              const status = record.meals[key] || '—';
+            {['breakfast', 'lunch', 'dinner'].map((meal, i) => {
+              const label = record?.[meal] ? MEAL_LABELS[record[meal]] : '—';
               return (
-                <div key={meal} className="flex items-center justify-between py-2 border-b border-[#F0EFFB] last:border-0">
-                  <span className="text-[15px] font-normal text-[#1a1a24]">{meal}</span>
-                  <MealPill status={status} />
+                <div
+                  key={meal}
+                  className="flex items-center justify-between py-2.5"
+                  style={i < 2 ? { borderBottom: '0.5px solid #F0EFFB' } : undefined}
+                >
+                  <span className="text-[14px] font-medium capitalize" style={{ color: FAMILY_TEXT }}>
+                    {meal}
+                  </span>
+                  <StatusPill label={label} style={MEAL_STYLES[label]} />
                 </div>
               );
             })}
-            <p className="text-[13px] font-normal mt-3 pt-2" style={{ color: FAMILY_MUTED }}>
-              Hydration: <span className="font-medium text-[#1a1a24]">{record.meals.hydration}</span>
-            </p>
+            <div className="flex items-center justify-between pt-3 mt-1" style={{ borderTop: '0.5px solid #F0EFFB' }}>
+              <span className="text-[14px] font-medium" style={{ color: FAMILY_TEXT }}>
+                Hydration
+              </span>
+              {record?.hydration ? (
+                <StatusPill
+                  label={HYDRATION_STYLES[record.hydration].label}
+                  style={HYDRATION_STYLES[record.hydration]}
+                />
+              ) : (
+                <StatusPill label="—" />
+              )}
+            </div>
           </div>
 
           <div className={`p-4 ${familyCardClass}`}>
-            <h3 className="text-[14px] font-medium text-[#1a1a24] mb-3">Mood</h3>
-            {!record.mood?.morning && !record.mood?.evening ? (
-              <p className="text-[14px] font-normal" style={{ color: FAMILY_MUTED }}>
-                Not yet logged
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {record.mood.morning ? (
-                  <p className="text-[15px] font-normal">
-                    <span style={{ color: FAMILY_MUTED }}>Morning · </span>
-                    {record.mood.morning.emoji} {record.mood.morning.label}
-                  </p>
-                ) : null}
-                {record.mood.evening ? (
-                  <p className="text-[15px] font-normal">
-                    <span style={{ color: FAMILY_MUTED }}>Evening · </span>
-                    {record.mood.evening.emoji} {record.mood.evening.label}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
-
-          <div className={`p-4 ${familyCardClass}`}>
-            <h3 className="text-[14px] font-medium text-[#1a1a24] mb-3">Activities</h3>
-            {record.activities.length === 0 ? (
-              <p className="text-[14px] font-normal" style={{ color: FAMILY_MUTED }}>
-                No activities scheduled for this day
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {record.activities.map((a) => (
-                  <li key={a.name} className="flex items-center justify-between gap-2">
-                    <span className="text-[15px] font-normal text-[#1a1a24]">
-                      {a.name}
-                      <span className="text-[13px] ml-1" style={{ color: FAMILY_MUTED }}>
-                        {a.time}
+            {['mood_morning', 'mood_evening'].map((key, i) => {
+              const period = key === 'mood_morning' ? 'Morning' : 'Evening';
+              const val = record?.[key];
+              const mood = val ? MOOD_LABELS[val] : null;
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between min-h-[40px]"
+                  style={i === 0 ? { borderBottom: '0.5px solid #F0EFFB' } : undefined}
+                >
+                  <span className="text-[14px] font-medium" style={{ color: FAMILY_TEXT }}>
+                    {period}
+                  </span>
+                  {mood ? (
+                    <span className="flex items-center gap-2">
+                      <span style={{ fontSize: '20px', lineHeight: 1 }}>{mood.emoji}</span>
+                      <span className="text-[14px] font-medium" style={{ color: FAMILY_TEXT }}>
+                        {mood.label}
                       </span>
                     </span>
+                  ) : (
+                    <span className="text-[14px] font-normal italic" style={{ color: FAMILY_MUTED }}>
+                      Not yet logged
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className={`p-4 ${familyCardClass}`}>
+            {activityRows.length === 0 ? (
+              <p className="text-[14px] font-normal" style={{ color: FAMILY_MUTED }}>
+                No activities logged for this day
+              </p>
+            ) : (
+              <ul>
+                {activityRows.map((a, i) => (
+                  <li
+                    key={a.name}
+                    className="flex items-center gap-3 min-h-[40px] py-1"
+                    style={i < activityRows.length - 1 ? { borderBottom: '0.5px solid #F0EFFB' } : undefined}
+                  >
                     <ActivityIcon status={a.status} />
+                    <span className="flex-1 text-[14px] font-medium" style={{ color: FAMILY_TEXT }}>
+                      {a.name}
+                    </span>
+                    {a.time ? (
+                      <span className="text-[12px] font-normal" style={{ color: FAMILY_MUTED }}>
+                        {a.time}
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -117,14 +328,21 @@ export default function FamilyDailyRecordTab() {
 
           <div
             className={`p-4 ${familyCardClass} border-l-[3px]`}
-            style={{ borderLeftColor: FAMILY_ACCENT }}
+            style={{ borderLeftColor: FAMILY_ACCENT, backgroundColor: FAMILY_NOTE_BG }}
           >
-            <h3 className="text-[14px] font-medium text-[#1a1a24] mb-2">Staff note</h3>
-            {record.staffNote ? (
-              <p className="text-[15px] font-normal leading-relaxed text-[#1a1a24]">{record.staffNote}</p>
+            <h3
+              className="text-[13px] font-medium uppercase tracking-wide mb-2"
+              style={{ color: FAMILY_MUTED }}
+            >
+              Today&apos;s note
+            </h3>
+            {record?.staff_note ? (
+              <p className="text-[15px] font-normal" style={{ color: FAMILY_TEXT, lineHeight: 1.7 }}>
+                {record.staff_note}
+              </p>
             ) : (
-              <p className="text-[14px] font-normal" style={{ color: FAMILY_MUTED }}>
-                No notes logged for this day.
+              <p className="text-[14px] font-normal italic" style={{ color: FAMILY_MUTED }}>
+                No notes logged yet today.
               </p>
             )}
           </div>

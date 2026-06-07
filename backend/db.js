@@ -159,6 +159,50 @@ function initSchema() {
       FOREIGN KEY (facility_id) REFERENCES facilities(id),
       FOREIGN KEY (resident_id) REFERENCES residents(id)
     );
+
+    CREATE TABLE IF NOT EXISTS activity_schedules (
+      id TEXT PRIMARY KEY,
+      facility_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      day_of_week INTEGER NOT NULL,
+      start_time TEXT NOT NULL,
+      location TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS family_visits (
+      id TEXT PRIMARY KEY,
+      resident_id TEXT NOT NULL,
+      family_user_id TEXT NOT NULL,
+      visit_date TEXT NOT NULL,
+      visit_time TEXT NOT NULL,
+      visitor_name TEXT NOT NULL,
+      notes TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (resident_id) REFERENCES residents(id) ON DELETE CASCADE,
+      FOREIGN KEY (family_user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_records (
+      id TEXT PRIMARY KEY,
+      resident_id TEXT NOT NULL,
+      record_date TEXT NOT NULL,
+      breakfast TEXT,
+      lunch TEXT,
+      dinner TEXT,
+      hydration TEXT,
+      mood_morning TEXT,
+      mood_evening TEXT,
+      activities_attended TEXT,
+      staff_note TEXT,
+      logged_by TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(resident_id, record_date),
+      FOREIGN KEY (resident_id) REFERENCES residents(id) ON DELETE CASCADE,
+      FOREIGN KEY (logged_by) REFERENCES users(id)
+    );
   `);
 }
 
@@ -254,6 +298,9 @@ async function initDatabase(options = {}) {
 function clearAllData() {
   db.exec(`
     DELETE FROM feed_reads;
+    DELETE FROM daily_records;
+    DELETE FROM family_visits;
+    DELETE FROM activity_schedules;
     DELETE FROM updates;
     DELETE FROM family_members;
     DELETE FROM pending_invites;

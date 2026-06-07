@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { PHOTO_TIMELINE, RESIDENT_NAME } from './familyPlaceholderData';
+import { apiFetch, photoUrl } from '../../api/client';
+import { useFamily } from './FamilyContext';
 import { FAMILY_ACCENT, FAMILY_MUTED } from './familyTheme';
 
-function photoUrl(seed) {
-  return `https://picsum.photos/seed/${seed}/400/400`;
+function formatDate(iso) {
+  const d = new Date(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatDate(iso) {
-  const d = new Date(iso + 'T12:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function monthLabel(iso) {
+  const d = new Date(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 function PhotoLightbox({ photos, index, onClose, onNavigate }) {
@@ -38,6 +40,8 @@ function PhotoLightbox({ photos, index, onClose, onNavigate }) {
     if (Math.abs(dx) > 50) onNavigate(dx > 0 ? -1 : 1);
   };
 
+  if (!photo) return null;
+
   return (
     <div
       className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
@@ -54,6 +58,32 @@ function PhotoLightbox({ photos, index, onClose, onNavigate }) {
       >
         ×
       </button>
+      {photos.length > 1 ? (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(-1);
+            }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 text-white text-2xl"
+            aria-label="Previous photo"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(1);
+            }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/10 text-white text-2xl"
+            aria-label="Next photo"
+          >
+            ›
+          </button>
+        </>
+      ) : null}
       <div
         className="flex-1 flex items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
@@ -61,43 +91,118 @@ function PhotoLightbox({ photos, index, onClose, onNavigate }) {
         onTouchEnd={onTouchEnd}
       >
         <img
-          src={photoUrl(photo.seed)}
-          alt={photo.caption}
+          src={photoUrl(photo.photo_url)}
+          alt={photo.caption || ''}
           className="max-w-full max-h-[60vh] object-contain rounded-lg"
         />
       </div>
       <div className="p-5 text-center text-white" onClick={(e) => e.stopPropagation()}>
         <p className="text-[15px] font-medium">{photo.caption}</p>
         <p className="text-[12px] font-normal mt-1 text-white/60">
-          {formatDate(photo.date)} · {photo.staff}
+          {photo.staff_name} · {formatDate(photo.created_at)}
         </p>
       </div>
     </div>
   );
 }
 
+function LoadingGrid() {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="aspect-square rounded-lg bg-gray-100 animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
 export default function FamilyPhotosTab() {
-  const [lightboxIndex, setLightboxIndex] = useState(null);
-  const photos = PHOTO_TIMELINE;
+  const { token, residentId, residentName, loadingResident, residentError, retryResident } = useFamily();
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [lightbox, setLightbox] = useState(null);
+
+  const loadPhotos = useCallback(async () => {
+    if (!residentId) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiFetch(`/api/photos/${residentId}`, { token });
+      setPhotos(data.photos || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [residentId, token]);
+
+  useEffect(() => {
+    loadPhotos();
+  }, [loadPhotos]);
 
   const grouped = photos.reduce((acc, p) => {
-    if (!acc[p.monthLabel]) acc[p.monthLabel] = [];
-    acc[p.monthLabel].push(p);
+    const label = monthLabel(p.created_at);
+    if (!acc[label]) acc[label] = [];
+    acc[label].push(p);
     return acc;
   }, {});
 
-  const navigate = useCallback(
+  const navigateInMonth = useCallback(
     (dir) => {
-      setLightboxIndex((i) => {
-        if (i === null) return null;
-        const next = i + dir;
-        if (next < 0) return photos.length - 1;
-        if (next >= photos.length) return 0;
-        return next;
+      setLightbox((lb) => {
+        if (!lb) return null;
+        const { monthPhotos, index } = lb;
+        let next = index + dir;
+        if (next < 0) next = monthPhotos.length - 1;
+        if (next >= monthPhotos.length) next = 0;
+        return { monthPhotos, index: next };
       });
     },
-    [photos.length]
+    []
   );
+
+  if (loadingResident) {
+    return (
+      <div className="space-y-5">
+        <div className="h-4 w-36 bg-gray-100 rounded animate-pulse" />
+        <LoadingGrid />
+      </div>
+    );
+  }
+
+  if (residentError) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-[14px] text-red-500 mb-3">{residentError}</p>
+        <button type="button" onClick={retryResident} className="text-[14px] font-medium" style={{ color: FAMILY_ACCENT }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <p className="text-[13px] font-normal" style={{ color: FAMILY_MUTED }}>
+          {residentName || 'Resident'}&apos;s moments
+        </p>
+        <LoadingGrid />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-[14px] text-red-500 mb-3">{error}</p>
+        <button type="button" onClick={loadPhotos} className="text-[14px] font-medium" style={{ color: FAMILY_ACCENT }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (photos.length === 0) {
     return (
@@ -119,7 +224,7 @@ export default function FamilyPhotosTab() {
   return (
     <div className="space-y-5">
       <p className="text-[13px] font-normal" style={{ color: FAMILY_MUTED }}>
-        {RESIDENT_NAME}&apos;s moments
+        {residentName || 'Resident'}&apos;s moments
       </p>
 
       {Object.entries(grouped).map(([month, items]) => (
@@ -128,34 +233,31 @@ export default function FamilyPhotosTab() {
             {month}
           </h3>
           <div className="grid grid-cols-3 gap-1.5">
-            {items.map((photo) => {
-              const globalIndex = photos.findIndex((p) => p.id === photo.id);
-              return (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => setLightboxIndex(globalIndex)}
-                  className="aspect-square rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#5B4FE8] focus:ring-offset-1"
-                >
-                  <img
-                    src={photoUrl(photo.seed)}
-                    alt={photo.caption}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              );
-            })}
+            {items.map((photo, idx) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => setLightbox({ monthPhotos: items, index: idx })}
+                className="aspect-square rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#5B4FE8] focus:ring-offset-1"
+              >
+                <img
+                  src={photoUrl(photo.photo_url)}
+                  alt={photo.caption || ''}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ))}
           </div>
         </section>
       ))}
 
-      {lightboxIndex !== null ? (
+      {lightbox ? (
         <PhotoLightbox
-          photos={photos}
-          index={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-          onNavigate={navigate}
+          photos={lightbox.monthPhotos}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onNavigate={navigateInMonth}
         />
       ) : null}
     </div>

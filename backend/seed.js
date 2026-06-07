@@ -223,6 +223,9 @@ async function runSeed({ reset = false, quiet = false } = {}) {
     });
   }
 
+  const { seedFamilyExtras } = require('./seedExtras');
+  seedFamilyExtras({ quiet });
+
   console.log('Seed complete.');
   printSummary();
   return { facilityId, facilityCode: FACILITY_CODE };

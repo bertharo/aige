@@ -1,0 +1,20 @@
+<svg viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="Kiness">
+  <path
+    d="M8 20 C8 16, 12 13, 16 17 C20 13, 24 16, 24 20 C24 25, 16 30, 16 30 C16 30, 8 25, 8 20 Z"
+    fill="#5B4FE8"
+    opacity="0.15"
+  />
+  <path
+    d="M10 20 C10 17, 13 15, 16 18 C19 15, 22 17, 22 20 C22 24, 16 28, 16 28 C16 28, 10 24, 10 20 Z"
+    fill="#5B4FE8"
+  />
+  <text
+    x="30"
+    y="27"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="22"
+    font-weight="400"
+    letter-spacing="0.5"
+    fill="#3C3489"
+  >Kiness</text>
+</svg>

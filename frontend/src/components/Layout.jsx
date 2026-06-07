@@ -3,6 +3,7 @@ import GlassBackground from './GlassBackground';
 import { LangChangeButton } from './LanguagePicker';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AdminThemeContext, useAdminTheme } from './admin/AdminShell';
+import KinessLogo from './KinessLogo';
 import { FONT_STACK, glassBar } from '../theme';
 
 export default function Layout({ onLogout, children, title }) {
@@ -14,12 +15,7 @@ export default function Layout({ onLogout, children, title }) {
       <div className="min-h-screen" style={{ fontFamily: FONT_STACK }}>
         <header className={`sticky top-0 z-50 border-b ${glassBar(dark)}`}>
           <div className="flex items-center justify-between h-11 px-4 max-w-[390px] mx-auto">
-            <span
-              className="text-[17px] font-medium tracking-tight"
-              style={{ color: dark ? '#fafafa' : '#0a0a0a' }}
-            >
-              {t('appName')}
-            </span>
+            <KinessLogo size="sm" variant={dark ? 'white' : 'color'} />
             <div className="flex items-center gap-1">
               <LangChangeButton dark={dark} onClick={openLanguagePicker} />
               <button
