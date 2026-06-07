@@ -5,7 +5,6 @@ import { useFamily } from './FamilyContext';
 import { dateKey, daysWithCalendarDots } from './familyDateUtils';
 import {
   FAMILY_ACCENT,
-  FAMILY_ACCENT_LIGHT,
   FAMILY_MUTED,
   FAMILY_NOTE_BG,
   FAMILY_TEXT,
