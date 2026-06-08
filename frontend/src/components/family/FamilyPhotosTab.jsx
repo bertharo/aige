@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch, photoUrl } from '../../api/client';
 import { useFamily } from './FamilyContext';
+import PhotoWithFallback from '../PhotoWithFallback';
 import { FAMILY_ACCENT, FAMILY_MUTED } from './familyTheme';
 
 function formatDate(iso) {
@@ -90,10 +91,14 @@ function PhotoLightbox({ photos, index, onClose, onNavigate }) {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <img
+        <PhotoWithFallback
           src={photoUrl(photo.photo_url)}
           alt={photo.caption || ''}
-          className="max-w-full max-h-[60vh] object-contain rounded-lg"
+          index={index}
+          height={320}
+          borderRadius={12}
+          imgClassName="max-w-full max-h-[60vh] object-contain rounded-lg"
+          imgStyle={{ maxHeight: '60vh' }}
         />
       </div>
       <div className="p-5 text-center text-white" onClick={(e) => e.stopPropagation()}>
@@ -240,11 +245,13 @@ export default function FamilyPhotosTab() {
                 onClick={() => setLightbox({ monthPhotos: items, index: idx })}
                 className="aspect-square rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#5B4FE8] focus:ring-offset-1"
               >
-                <img
+                <PhotoWithFallback
                   src={photoUrl(photo.photo_url)}
                   alt={photo.caption || ''}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
+                  index={photos.findIndex((p) => p.id === photo.id)}
+                  borderRadius={8}
+                  fill
+                  imgClassName="w-full h-full object-cover"
                 />
               </button>
             ))}

@@ -10,6 +10,7 @@ import {
   initials,
   staffAvatarColor,
 } from './familyTheme';
+import PhotoWithFallback from '../PhotoWithFallback';
 import './familyStyles.css';
 
 function HeartButton({ liked, count, onToggle }) {
@@ -135,12 +136,17 @@ function FeedCard({ item, index, liked, likeCount, onLike }) {
         </p>
 
         {item.photoUrl ? (
-          <img
-            src={photoUrl(item.photoUrl)}
-            alt=""
-            className="w-full mt-3 object-cover"
-            style={{ borderRadius: '10px', maxHeight: '200px' }}
-          />
+          <div className="w-full mt-3">
+            <PhotoWithFallback
+              src={photoUrl(item.photoUrl)}
+              alt=""
+              index={index}
+              height={160}
+              borderRadius={10}
+              imgClassName="w-full object-cover"
+              imgStyle={{ borderRadius: 10, maxHeight: 200, height: 160 }}
+            />
+          </div>
         ) : null}
 
         <div className="mt-4 pt-1">
