@@ -62,6 +62,11 @@ const locale = {
   installBody: 'Get quick access to updates about your loved one',
   installButton: 'Add to Home Screen',
   installDismiss: 'Not now',
+  installIosSteps:
+    'In Safari, tap the Share button at the bottom, then scroll down and tap "Add to Home Screen".',
+  installAndroidManual:
+    'Tap the menu (⋮) in your browser, then choose "Install app" or "Add to Home screen".',
+  installGotIt: 'Got it',
   language: 'Language',
   chooseLanguage: 'Choose your language',
   chooseLanguageSub: '选择您的语言',

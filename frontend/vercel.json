@@ -34,7 +34,7 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!static/|rosa/|manifest.json|service-worker.js|build-id.json|icon|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]

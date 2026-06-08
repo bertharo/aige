@@ -35,11 +35,16 @@ if (backend && backend.startsWith('http')) {
   rewrites = [
     { source: '/api/:path*', destination: `${origin}/api/:path*` },
     { source: '/uploads/:path*', destination: `${origin}/uploads/:path*` },
-    { source: '/((?!api/|uploads/|static/|.*\\..*).*)', destination: '/index.html' },
+    { source: '/((?!api/|uploads/|static/|rosa/|manifest.json|service-worker.js|build-id.json|icon|.*\\..*).*)', destination: '/index.html' },
   ];
   console.log('[vercel] Proxy configured →', origin);
 } else {
-  rewrites = [{ source: '/(.*)', destination: '/index.html' }];
+  rewrites = [
+    {
+      source: '/((?!static/|rosa/|manifest.json|service-worker.js|build-id.json|icon|.*\\..*).*)',
+      destination: '/index.html',
+    },
+  ];
   console.log('[vercel] No KINNESS_BACKEND_URL — SPA-only rewrites (local dev uses REACT_APP_API_URL)');
 }
 

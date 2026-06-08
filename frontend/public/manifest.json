@@ -2,17 +2,37 @@
   "short_name": "Kiness",
   "name": "Kiness — Keeping Families Connected",
   "description": "Family updates from elder care facilities",
+  "id": "/",
   "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#2D6A4F",
-  "background_color": "#FFFFFF",
+  "theme_color": "#5A4FF7",
+  "background_color": "#F0EFFB",
   "orientation": "portrait-primary"
 }
