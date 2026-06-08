@@ -62,6 +62,13 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
+const rosaDir = fs.existsSync(path.join(__dirname, 'rosa'))
+  ? path.join(__dirname, 'rosa')
+  : path.join(__dirname, '../frontend/public/rosa');
+if (fs.existsSync(rosaDir)) {
+  app.use('/rosa', express.static(rosaDir));
+}
+
 app.use((req, res, next) => {
   if (!db && req.path !== '/health') {
     return res.status(503).json({ success: false, message: 'Database is starting — try again in a moment' });

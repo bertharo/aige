@@ -1,5 +1,5 @@
 const { getDb, randomUUID } = require('./db');
-const { ROSA_AVATAR, rosaPhoto } = require('./rosaPhotos');
+const { ROSA_AVATAR } = require('./rosaPhotos');
 
 const FACILITY_CODE = 'SGSL2024';
 
@@ -22,56 +22,56 @@ const ROSA_PHOTO_POSTS = [
       'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 1,
-    url: rosaPhoto('patio'),
+    photo: '/rosa/rosa-2.jpg',
   },
   {
     content:
       'Took Rosa on a slow walk through the garden this afternoon. She stopped at the rose bushes for a long time and told me about the garden she kept for thirty years back home. She knows every flower by name.',
     staffEmail: 'david@sunrisegardens.com',
     daysAgo: 2,
-    url: rosaPhoto('garden'),
+    photo: '/rosa/rosa-1.jpg',
   },
   {
     content:
       'Rosa finished her whole lunch today and asked for seconds of the soup. She saved her flan for later — said Jenny is coming Sunday and she wants to share it with her.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 3,
-    url: rosaPhoto('lunch'),
+    photo: '/rosa/rosa-8.jpg',
   },
   {
     content:
       'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 4,
-    url: rosaPhoto('pt'),
+    photo: '/rosa/rosa-7.jpg',
   },
   {
     content:
       'Found Rosa in the sunroom this afternoon with her book. She is reading a novel in Spanish that her sister sent from Mexico. She did not want to stop — we had to remind her about dinner.',
     staffEmail: 'david@sunrisegardens.com',
     daysAgo: 5,
-    url: rosaPhoto('reading'),
+    photo: '/rosa/rosa-5.jpg',
   },
   {
     content:
       'Music Wednesday is Rosa\'s favorite day. She knew every word of every Spanish song and was singing loud enough that people in the hallway stopped to listen. The whole room was smiling.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 6,
-    url: rosaPhoto('music'),
+    photo: '/rosa/rosa-3.jpg',
   },
   {
     content:
       'Jenny came by Sunday afternoon and they sat together on the patio for almost two hours. Rosa was glowing the whole visit. When Jenny left Rosa said — that is the best medicine there is.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 9,
-    url: rosaPhoto('visit'),
+    photo: '/rosa/rosa-6.jpg',
   },
   {
     content:
       'Rosa joined the morning stretch group for the second week in a row. She jokes that she is training for a marathon. The group loves having her — she keeps everyone laughing.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 12,
-    url: rosaPhoto('stretch'),
+    photo: '/rosa/rosa-4.jpg',
   },
 ];
 
@@ -323,7 +323,7 @@ function seedPhotoUpdates(db, facilityId, residentId, staffByEmail) {
       residentId,
       staffId,
       p.content,
-      p.url,
+      p.photo,
       createdAt
     );
   }

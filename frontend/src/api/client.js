@@ -16,6 +16,8 @@ export function apiUrl(path) {
 export function photoUrl(path) {
   if (!path) return null;
   if (path.startsWith('http')) return path;
+  // Bundled Rosa demo photos ship with the frontend static bundle
+  if (path.startsWith('/rosa/')) return path;
   return apiUrl(path);
 }
 

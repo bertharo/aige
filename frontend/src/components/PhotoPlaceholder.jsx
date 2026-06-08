@@ -14,6 +14,7 @@ const MOMENTS = [
 export function isLikelyBrokenPhotoUrl(url) {
   if (!url) return true;
   const lower = String(url).toLowerCase();
+  if (lower.includes('/rosa/')) return false;
   return lower.includes('unsplash') || lower.includes('picsum');
 }
 

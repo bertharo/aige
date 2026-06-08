@@ -105,7 +105,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
     staff: 'Sarah Reyes',
-    photo_url: ROSA_PHOTOS.patio,
+    photo_url: ROSA_PHOTOS.coffee,
   },
   {
     id: 'p2',
@@ -132,7 +132,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
     staff: 'Sarah Reyes',
-    photo_url: ROSA_PHOTOS.pt,
+    photo_url: ROSA_PHOTOS.therapy,
   },
 ];
 

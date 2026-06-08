@@ -38,6 +38,7 @@ export default function PhotoWithFallback({
           }}
           loading="lazy"
           onError={(e) => {
+            e.target.onerror = null;
             e.target.style.display = 'none';
             setFailed(true);
           }}
