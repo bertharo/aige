@@ -57,7 +57,7 @@ export default function FamilyShell({ activeTab, onTabChange, onLogout, children
       <main
         className="flex-1 max-w-[390px] mx-auto w-full px-4"
         style={{
-          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px)',
+          paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 8px + var(--kinness-install-offset, 0px))',
         }}
         role="tabpanel"
       >

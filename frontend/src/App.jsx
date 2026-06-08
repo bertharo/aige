@@ -155,7 +155,12 @@ function AppShell() {
   const isPublicPage = location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register';
 
   if (!langChosen && !isPublicPage) {
-    return <LanguagePicker onChoose={chooseLanguage} />;
+    return (
+      <>
+        <LanguagePicker onChoose={chooseLanguage} />
+        <InstallPrompt />
+      </>
+    );
   }
 
   return (

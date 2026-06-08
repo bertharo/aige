@@ -63,9 +63,11 @@ const locale = {
   installButton: 'Add to Home Screen',
   installDismiss: 'Not now',
   installIosSteps:
-    'In Safari, tap the Share button at the bottom, then scroll down and tap "Add to Home Screen".',
+    'In Safari, tap Share (the square with an arrow) at the bottom of the screen, then tap "Add to Home Screen".',
   installAndroidManual:
-    'Tap the menu (⋮) in your browser, then choose "Install app" or "Add to Home screen".',
+    'Tap the menu (⋮) in Chrome, then choose "Install app" or "Add to Home screen".',
+  installOpenSafari:
+    'To install, open this page in Safari first — copy the link, paste it in Safari, then use Share → Add to Home Screen.',
   installGotIt: 'Got it',
   language: 'Language',
   chooseLanguage: 'Choose your language',
