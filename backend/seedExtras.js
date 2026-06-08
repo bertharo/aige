@@ -1,4 +1,5 @@
 const { getDb, randomUUID } = require('./db');
+const { ROSA_AVATAR, rosaPhoto } = require('./rosaPhotos');
 
 const FACILITY_CODE = 'SGSL2024';
 
@@ -21,56 +22,56 @@ const ROSA_PHOTO_POSTS = [
       'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 1,
-    url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80',
+    url: rosaPhoto('patio'),
   },
   {
     content:
       'Took Rosa on a slow walk through the garden this afternoon. She stopped at the rose bushes for a long time and told me about the garden she kept for thirty years back home. She knows every flower by name.',
     staffEmail: 'david@sunrisegardens.com',
     daysAgo: 2,
-    url: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800&q=80',
+    url: rosaPhoto('garden'),
   },
   {
     content:
       'Rosa finished her whole lunch today and asked for seconds of the soup. She saved her flan for later — said Jenny is coming Sunday and she wants to share it with her.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 3,
-    url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
+    url: rosaPhoto('lunch'),
   },
   {
     content:
       'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 4,
-    url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80',
+    url: rosaPhoto('pt'),
   },
   {
     content:
       'Found Rosa in the sunroom this afternoon with her book. She is reading a novel in Spanish that her sister sent from Mexico. She did not want to stop — we had to remind her about dinner.',
     staffEmail: 'david@sunrisegardens.com',
     daysAgo: 5,
-    url: 'https://images.unsplash.com/photo-1512236258305-32fb110fdb01?w=800&q=80',
+    url: rosaPhoto('reading'),
   },
   {
     content:
       'Music Wednesday is Rosa\'s favorite day. She knew every word of every Spanish song and was singing loud enough that people in the hallway stopped to listen. The whole room was smiling.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 6,
-    url: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=800&q=80',
+    url: rosaPhoto('music'),
   },
   {
     content:
       'Jenny came by Sunday afternoon and they sat together on the patio for almost two hours. Rosa was glowing the whole visit. When Jenny left Rosa said — that is the best medicine there is.',
     staffEmail: 'sarah@sunrisegardens.com',
     daysAgo: 9,
-    url: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=800&q=80',
+    url: rosaPhoto('visit'),
   },
   {
     content:
       'Rosa joined the morning stretch group for the second week in a row. She jokes that she is training for a marathon. The group loves having her — she keeps everyone laughing.',
     staffEmail: 'aisha@sunrisegardens.com',
     daysAgo: 12,
-    url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
+    url: rosaPhoto('stretch'),
   },
 ];
 
@@ -353,6 +354,8 @@ function seedFamilyExtras({ quiet = false } = {}) {
     'aisha@sunrisegardens.com': aisha?.id,
   };
   const defaultStaff = sarah?.id || david?.id || aisha?.id;
+
+  db.prepare('UPDATE residents SET photo_url = ? WHERE id = ?').run(ROSA_AVATAR, rosa.id);
 
   seedActivitySchedules(db, facility.id);
   seedDailyRecords(db, rosa.id, defaultStaff);

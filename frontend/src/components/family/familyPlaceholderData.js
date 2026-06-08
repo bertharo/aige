@@ -1,3 +1,5 @@
+import { ROSA_PHOTOS } from '../../constants/rosaPhotos';
+
 /** Demo anchor: Wednesday June 3, 2026 */
 export const DEMO_TODAY = new Date(2026, 5, 3);
 
@@ -103,7 +105,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Rosa was up early this morning and wanted her coffee on the patio. She sat outside for almost an hour, said the air reminded her of mornings back in Guadalajara.',
     staff: 'Sarah Reyes',
-    photo_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&q=80',
+    photo_url: ROSA_PHOTOS.patio,
   },
   {
     id: 'p2',
@@ -112,7 +114,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Took Rosa on a slow walk through the garden this afternoon. She stopped at the rose bushes for a long time and told me about the garden she kept for thirty years back home.',
     staff: 'David Park',
-    photo_url: 'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800&q=80',
+    photo_url: ROSA_PHOTOS.garden,
   },
   {
     id: 'p3',
@@ -121,7 +123,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Rosa finished her whole lunch today and asked for seconds of the soup. She saved her flan for later — said Jenny is coming Sunday and she wants to share it with her.',
     staff: 'Aisha Thompson',
-    photo_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
+    photo_url: ROSA_PHOTOS.lunch,
   },
   {
     id: 'p4',
@@ -130,7 +132,7 @@ export const PHOTO_TIMELINE = [
     caption:
       'Rosa worked through her full PT session this morning without stopping once. The therapist said her balance has improved a lot this month. Rosa said she is determined to dance at Jenny\'s wedding someday.',
     staff: 'Sarah Reyes',
-    photo_url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80',
+    photo_url: ROSA_PHOTOS.pt,
   },
 ];
 
