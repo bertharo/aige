@@ -41,14 +41,14 @@ const STAFF = [
 ];
 
 const FAMILIES = [
-  { name: 'Jenny Haro', email: 'jenny.haro@gmail.com', password: 'Family1234!', resident: 'Rosa Haro', relationship: 'Daughter' },
-  { name: 'Michael Johnson', email: 'michael.j@gmail.com', password: 'Family1234!', resident: 'Robert Johnson', relationship: 'Son' },
-  { name: 'Kenji Nakamura', email: 'kenji.n@gmail.com', password: 'Family1234!', resident: 'Helen Nakamura', relationship: 'Son' },
-  { name: 'Patricia Williams', email: 'patricia.w@gmail.com', password: 'Family1234!', resident: 'George Williams', relationship: 'Daughter' },
-  { name: 'Susan Kim', email: 'susan.kim@gmail.com', password: 'Family1234!', resident: 'Dorothy Kim', relationship: 'Daughter' },
-  { name: 'Marco Deluca', email: 'marco.d@gmail.com', password: 'Family1234!', resident: 'Frank Deluca', relationship: 'Son' },
-  { name: 'Wei Lin', email: 'wei.lin@gmail.com', password: 'Family1234!', resident: 'Mei Lin', relationship: 'Son' },
-  { name: 'Amara Okafor', email: 'amara.o@gmail.com', password: 'Family1234!', resident: 'James Okafor', relationship: 'Daughter' },
+  { name: 'Jenny Haro', email: 'jenny.haro@gmail.com', password: 'Family1234!', resident: 'Rosa Haro', relationship: 'Daughter', preferredLanguage: 'en' },
+  { name: 'Michael Johnson', email: 'michael.j@gmail.com', password: 'Family1234!', resident: 'Robert Johnson', relationship: 'Son', preferredLanguage: 'en' },
+  { name: 'Kenji Nakamura', email: 'kenji.n@gmail.com', password: 'Family1234!', resident: 'Helen Nakamura', relationship: 'Son', preferredLanguage: 'en' },
+  { name: 'Patricia Williams', email: 'patricia.w@gmail.com', password: 'Family1234!', resident: 'George Williams', relationship: 'Daughter', preferredLanguage: 'en' },
+  { name: 'Susan Kim', email: 'susan.kim@gmail.com', password: 'Family1234!', resident: 'Dorothy Kim', relationship: 'Daughter', preferredLanguage: 'en' },
+  { name: 'Marco Deluca', email: 'marco.d@gmail.com', password: 'Family1234!', resident: 'Frank Deluca', relationship: 'Son', preferredLanguage: 'es' },
+  { name: 'Wei Lin', email: 'wei.lin@gmail.com', password: 'Family1234!', resident: 'Mei Lin', relationship: 'Son', preferredLanguage: 'en' },
+  { name: 'Amara Okafor', email: 'amara.o@gmail.com', password: 'Family1234!', resident: 'James Okafor', relationship: 'Daughter', preferredLanguage: 'en' },
 ];
 
 const UPDATES = [
@@ -195,9 +195,9 @@ async function runSeed({ reset = false, quiet = false } = {}) {
     const link = db.prepare('SELECT id FROM family_members WHERE user_id = ? AND resident_id = ?').get(userId, residentId);
     if (link) continue;
     db.prepare(`
-      INSERT INTO family_members (id, user_id, resident_id, relationship)
-      VALUES (?, ?, ?, ?)
-    `).run(randomUUID(), userId, residentId, f.relationship);
+      INSERT INTO family_members (id, user_id, resident_id, relationship, preferred_language)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(randomUUID(), userId, residentId, f.relationship, f.preferredLanguage || 'en');
   }
 
   console.log('Adding updates...');

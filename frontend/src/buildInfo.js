@@ -1,2 +1,2 @@
 // Generated at build — used to bust stale PWA caches
-export const BUILD_ID = 'local-mq4qahit';
+export const BUILD_ID = 'local-mq7hava3';

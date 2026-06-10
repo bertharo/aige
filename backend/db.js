@@ -204,6 +204,23 @@ function initSchema() {
       FOREIGN KEY (logged_by) REFERENCES users(id)
     );
   `);
+
+  migrateSchema();
+}
+
+function migrateSchema() {
+  const alters = [
+    "ALTER TABLE family_members ADD COLUMN preferred_language TEXT DEFAULT 'en'",
+    'ALTER TABLE updates ADD COLUMN transcript TEXT',
+    'ALTER TABLE updates ADD COLUMN audio_url TEXT',
+  ];
+  for (const sql of alters) {
+    try {
+      db.exec(sql);
+    } catch {
+      /* column already exists */
+    }
+  }
 }
 
 function seedIfEmpty() {

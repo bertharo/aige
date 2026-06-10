@@ -28,7 +28,9 @@ function sanitizeEmail(email) {
 const validateEmailField = body('email').trim().isEmail().customSanitizer(sanitizeEmail);
 
 const uploadsDir = path.join(__dirname, 'uploads');
+const voiceDir = path.join(uploadsDir, 'voice');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(voiceDir)) fs.mkdirSync(voiceDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: uploadsDir,
@@ -43,6 +45,22 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     if (/^image\//.test(file.mimetype)) cb(null, true);
     else cb(new Error('Only images are allowed'));
+  },
+});
+
+const voiceStorage = multer.diskStorage({
+  destination: voiceDir,
+  filename: (_req, file, cb) => {
+    const ext = file.mimetype.includes('mp4') || file.mimetype.includes('m4a') ? '.m4a' : '.webm';
+    cb(null, `${randomUUID()}${ext}`);
+  },
+});
+const voiceUpload = multer({
+  storage: voiceStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^audio\//.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Only audio recordings are allowed'));
   },
 });
 
@@ -621,15 +639,17 @@ async function ensureDemoData() {
 }
 
 function registerApiRoutes() {
-  const deps = { db, authenticateToken, requireRole, randomUUID };
+  const deps = { db, authenticateToken, requireRole, randomUUID, voiceUpload };
   const { registerCalendarRoutes } = require('./routes/calendar');
   const { registerDailyRecordRoutes } = require('./routes/dailyRecord');
   const { registerPhotosRoutes } = require('./routes/photos');
   const { registerStaffRecordRoutes } = require('./routes/staffRecord');
+  const { registerVoiceRoutes } = require('./routes/voice');
   registerCalendarRoutes(app, deps);
   registerDailyRecordRoutes(app, deps);
   registerPhotosRoutes(app, deps);
   registerStaffRecordRoutes(app, deps);
+  registerVoiceRoutes(app, deps);
 }
 
 async function startServer() {

@@ -68,7 +68,7 @@ After login, users are redirected by role:
 | Role | Route | Purpose |
 |------|-------|---------|
 | `admin` | `/admin` | Dashboard, residents, family links, staff invites |
-| `staff` | `/staff/post` | Post updates with photo |
+| `staff` | `/staff/post` | Voice or typed updates with photo |
 | `family` | `/family/feed` | View updates for linked loved ones |
 
 Registration requires **name, email, password, and facility code**. Staff/family must be invited by email (admin panel) or they register as family by default.
@@ -87,6 +87,53 @@ When staff posts an update, linked family members receive:
 - **Body:** Update text + link to `/family/feed`
 
 Configure SMTP in `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`).
+
+## Voice logging (staff)
+
+Staff can log care notes by voice on `/staff/post` — push-and-hold the mic button (max 10 seconds), review the AI draft, then approve before anything reaches the family feed.
+
+### Setup
+
+Add to `backend/.env`:
+
+```
+GROQ_API_KEY=gsk_...   # https://console.groq.com
+```
+
+On Render, set the same env var on the backend service.
+
+### Flow
+
+1. Staff selects a resident, then holds the mic button and speaks.
+2. `POST /api/staff/voice/draft` — audio uploaded → Groq Whisper transcribes → Groq Llama structures into **care note** (staff record) + **family update** (warm message in the family's preferred language).
+3. Review modal — staff edits both fields; nothing is posted yet.
+4. `POST /api/staff/voice/approve` — inserts into `updates`, merges care note into today's `daily_records`, emails family.
+
+### Models (Groq)
+
+| Step | Model |
+|------|-------|
+| Transcription | `whisper-large-v3-turbo` |
+| Structuring | `llama-3.3-70b-versatile` |
+
+All AI calls live in `backend/lib/ai.js`. To swap structuring to Claude later, replace the `structure()` implementation — the route layer stays the same.
+
+### Multilingual family updates
+
+Each `family_members` row has `preferred_language` (default `en`). The demo seed sets Marco Deluca's family to `es`. Spoken language can differ; the family update is written in the linked family's preferred language.
+
+### Test locally
+
+1. Start backend with `GROQ_API_KEY` set.
+2. Log in as staff (`sarah@sunrisegardens.com` / `Staff1234!` after `npm run seed:reset`).
+3. Select **Rosa Haro**, hold mic, say something like: *"Rosa had a good lunch, ate most of her soup, and napped for an hour."*
+4. Review and approve — check `/family/feed` as `jenny.haro@gmail.com`.
+
+### TODO (out of scope for MVP)
+
+- SMS notifications for voice updates
+- Offline voice queue
+- Calendar voice entry
 
 ## Multilingual UI
 

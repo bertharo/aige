@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout from '../components/Layout';
 import { useAdminDark } from '../components/admin/AdminShell';
 import { apiFetch } from '../api/client';
 import { useLanguage } from '../i18n/LanguageContext';
 import { ACCENT, btnAccentClass, glassField, glassPanel } from '../theme';
+import VoiceCaptureButton from '../components/staff/VoiceCaptureButton';
+import VoiceReviewModal from '../components/staff/VoiceReviewModal';
 
 const MEAL_OPTIONS = [
   { value: 'ate_well', label: 'Ate well' },
@@ -242,9 +244,34 @@ function StaffPostForm({ user, token }) {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showTypedForm, setShowTypedForm] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
+  const [voiceDraft, setVoiceDraft] = useState(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   const label = dark ? 'text-white/70' : 'text-black/55';
   const inputClass = `w-full min-h-[44px] px-3.5 text-[15px] outline-none bg-transparent ${dark ? 'text-white' : 'text-[#0a0a0a]'}`;
+
+  const voiceLabels = {
+    holdToTalk: t('voiceHoldToTalk'),
+    release: t('voiceRelease'),
+    processing: t('voiceProcessing'),
+    selectFirst: t('voiceSelectFirst'),
+    hint: t('voiceHint'),
+  };
+
+  const reviewLabels = {
+    title: t('voiceReviewTitle'),
+    subtitle: t('voiceReviewSubtitle'),
+    transcript: t('voiceTranscript'),
+    careNote: t('voiceCareNote'),
+    familyUpdate: t('voiceFamilyUpdate'),
+    approve: t('voiceApprove'),
+    approving: t('voiceApproving'),
+    cancel: t('voiceCancel'),
+    parseFailed: t('voiceParseFailed'),
+  };
 
   useEffect(() => {
     apiFetch('/api/staff/residents', { token })
@@ -258,6 +285,59 @@ function StaffPostForm({ user, token }) {
 
   const selected = residents.find((r) => r.id === residentId);
   const residentName = selected ? `${selected.first_name} ${selected.last_name}` : '';
+
+  const handleRecordingComplete = useCallback(
+    async (blob, mimeType) => {
+      if (!residentId) return;
+      setVoiceProcessing(true);
+      setError('');
+      try {
+        const ext = mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'webm';
+        const form = new FormData();
+        form.append('residentId', residentId);
+        form.append('audio', blob, `recording.${ext}`);
+        const data = await apiFetch('/api/staff/voice/draft', {
+          token,
+          method: 'POST',
+          body: form,
+          isFormData: true,
+        });
+        setVoiceDraft(data);
+        setReviewOpen(true);
+      } catch (err) {
+        setError(err.message || t('postError'));
+      } finally {
+        setVoiceProcessing(false);
+      }
+    },
+    [residentId, token, t]
+  );
+
+  const handleVoiceApprove = async ({ careNote, familyUpdate, transcript, audioUrl }) => {
+    setApproving(true);
+    setError('');
+    try {
+      await apiFetch('/api/staff/voice/approve', {
+        token,
+        method: 'POST',
+        body: {
+          residentId,
+          careNote,
+          familyUpdate,
+          transcript,
+          audioUrl,
+        },
+      });
+      setReviewOpen(false);
+      setVoiceDraft(null);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) {
+      setError(err.message || t('postError'));
+    } finally {
+      setApproving(false);
+    }
+  };
 
   const handlePhoto = (e) => {
     const file = e.target.files?.[0];
@@ -306,7 +386,7 @@ function StaffPostForm({ user, token }) {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div>
           <label htmlFor="resident" className={`block text-[14px] font-medium mb-1.5 ${label}`}>
             {t('selectResident')}
@@ -316,7 +396,6 @@ function StaffPostForm({ user, token }) {
               id="resident"
               value={residentId}
               onChange={(e) => setResidentId(e.target.value)}
-              required
               className={`${inputClass} appearance-none`}
             >
               <option value="">—</option>
@@ -330,61 +409,103 @@ function StaffPostForm({ user, token }) {
           </div>
         </div>
 
-        {residentId ? <DailyRecordSection residentId={residentId} token={token} dark={dark} /> : null}
+        {residentId ? (
+          <>
+            <div className={`${glassPanel(dark)} py-4`}>
+              <VoiceCaptureButton
+                disabled={!residentId}
+                processing={voiceProcessing}
+                onRecordingComplete={handleRecordingComplete}
+                onError={(msg) => setError(msg)}
+                labels={voiceLabels}
+              />
+            </div>
 
-        <div>
-          <label htmlFor="content" className={`block text-[14px] font-medium mb-1.5 ${label}`}>
-            {t('newUpdate')}
-          </label>
-          <div className={glassField(dark)}>
-            <textarea
-              id="content"
-              rows={5}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={t('updatePlaceholder', { name: residentName || '…' })}
-              required
-              className={`${inputClass} py-3 resize-none`}
-            />
-          </div>
-        </div>
+            {residentId ? <DailyRecordSection residentId={residentId} token={token} dark={dark} /> : null}
 
-        <div>
-          <label className={`block w-full min-h-[44px] ${glassField(dark)} cursor-pointer`}>
-            <span
-              className="flex items-center justify-center gap-2 w-full py-3 text-[14px] font-medium"
+            <button
+              type="button"
+              onClick={() => setShowTypedForm((v) => !v)}
+              className="w-full text-[14px] font-medium py-2"
               style={{ color: ACCENT }}
             >
-              {t('addPhoto')}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handlePhoto}
-              className="sr-only"
-            />
-          </label>
-          {photoPreview ? (
-            <img src={photoPreview} alt="" className="mt-3 w-full rounded-xl max-h-48 object-cover" />
-          ) : null}
-        </div>
+              {showTypedForm ? '−' : '+'} {t('typeInstead')}
+            </button>
+
+            {showTypedForm ? (
+              <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-black/5">
+                <div>
+                  <label htmlFor="content" className={`block text-[14px] font-medium mb-1.5 ${label}`}>
+                    {t('newUpdate')}
+                  </label>
+                  <div className={glassField(dark)}>
+                    <textarea
+                      id="content"
+                      rows={5}
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder={t('updatePlaceholder', { name: residentName || '…' })}
+                      required
+                      className={`${inputClass} py-3 resize-none`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block w-full min-h-[44px] ${glassField(dark)} cursor-pointer`}>
+                    <span
+                      className="flex items-center justify-center gap-2 w-full py-3 text-[14px] font-medium"
+                      style={{ color: ACCENT }}
+                    >
+                      {t('addPhoto')}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handlePhoto}
+                      className="sr-only"
+                    />
+                  </label>
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="" className="mt-3 w-full rounded-xl max-h-48 object-cover" />
+                  ) : null}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={posting || !residentId}
+                  className={`w-full ${btnAccentClass()}`}
+                  style={{ backgroundColor: ACCENT }}
+                >
+                  {posting ? t('posting') : t('postUpdate')}
+                </button>
+              </form>
+            ) : null}
+          </>
+        ) : null}
 
         {error ? (
           <p className="text-[15px] text-red-500" role="alert">
             {error}
           </p>
         ) : null}
+      </div>
 
-        <button
-          type="submit"
-          disabled={posting || !residentId}
-          className={`w-full ${btnAccentClass()}`}
-          style={{ backgroundColor: ACCENT }}
-        >
-          {posting ? t('posting') : t('postUpdate')}
-        </button>
-      </form>
+      <VoiceReviewModal
+        open={reviewOpen}
+        draft={voiceDraft}
+        dark={dark}
+        labels={reviewLabels}
+        approving={approving}
+        onClose={() => {
+          if (!approving) {
+            setReviewOpen(false);
+            setVoiceDraft(null);
+          }
+        }}
+        onApprove={handleVoiceApprove}
+      />
     </>
   );
 }
