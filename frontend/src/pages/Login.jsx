@@ -77,7 +77,18 @@ export default function Login({ onLogin, onSwitchToRegister }) {
         </button>
       </form>
 
-      <p className="mt-5 text-center text-[15px] text-black/45">
+      <button
+        type="button"
+        onClick={() => {
+          setEmail('demo@sunrisegardens.com');
+          setPassword('Demo1234!');
+        }}
+        className="mt-4 w-full text-center text-[13px] text-black/40 hover:text-black/65 transition-colors min-h-[40px]"
+      >
+        Use demo account (toggle Admin · Staff · Family)
+      </button>
+
+      <p className="mt-3 text-center text-[15px] text-black/45">
         {t('noAccount')}{' '}
         <button
           type="button"

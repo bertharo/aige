@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-const { initDatabase, randomUUID, ensureDefaultAdmin, seedIfEmpty } = require('./db');
+const { initDatabase, randomUUID, ensureDefaultAdmin, ensureDemoSuperuser, seedIfEmpty } = require('./db');
 const { sendUpdateNotification } = require('./mail');
 
 let db;
@@ -124,11 +124,15 @@ function getUserContext(userId) {
     LIMIT 1
   `).get(userId);
 
-  const user = db.prepare('SELECT id, name, email, created_at FROM users WHERE id = ?').get(userId);
+  const user = db.prepare('SELECT id, name, email, is_demo, created_at FROM users WHERE id = ?').get(userId);
   if (!user || !roleRow) return null;
 
   return {
-    ...user,
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    created_at: user.created_at,
+    isDemo: Boolean(user.is_demo),
     role: roleRow.role,
     facilityId: roleRow.facility_id,
     facilityName: roleRow.facility_name,
@@ -305,6 +309,81 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
   const user = getUserContext(req.user.userId);
   if (!user) return res.status(404).json({ success: false, message: 'User not found' });
   res.json({ success: true, user });
+});
+
+const DEMO_VIEWS = ['admin', 'staff', 'family'];
+
+/** Demo superuser only: switch active role view (updates DB role + issues new JWT). */
+app.post('/api/auth/switch-view', authenticateToken, (req, res) => {
+  try {
+    const role = String(req.body?.role || '').toLowerCase();
+    if (!DEMO_VIEWS.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Choose admin, staff, or family',
+      });
+    }
+
+    const row = db.prepare('SELECT id, email, is_demo FROM users WHERE id = ?').get(req.user.userId);
+    if (!row || !row.is_demo) {
+      return res.status(403).json({
+        success: false,
+        message: 'View switching is only available on the demo account',
+      });
+    }
+
+    const roleRow = db
+      .prepare('SELECT id FROM user_roles WHERE user_id = ? AND facility_id = ?')
+      .get(row.id, req.user.facilityId);
+    if (!roleRow) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is not linked to a facility',
+      });
+    }
+
+    db.prepare('UPDATE user_roles SET role = ? WHERE user_id = ? AND facility_id = ?').run(
+      role,
+      row.id,
+      req.user.facilityId
+    );
+
+    // Family APIs scope by family_members — keep Rosa Haro linked for the demo account
+    if (role === 'family') {
+      const rosa = db
+        .prepare(
+          `SELECT id FROM residents WHERE facility_id = ? AND first_name = ? AND last_name = ?`
+        )
+        .get(req.user.facilityId, 'Rosa', 'Haro');
+      if (rosa) {
+        const link = db
+          .prepare('SELECT id FROM family_members WHERE user_id = ? AND resident_id = ?')
+          .get(row.id, rosa.id);
+        if (!link) {
+          db.prepare(`
+            INSERT INTO family_members (id, user_id, resident_id, relationship, preferred_language)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(randomUUID(), row.id, rosa.id, 'Demo Viewer', 'en');
+        }
+      }
+    }
+
+    const user = getUserContext(row.id);
+    const token = signToken(row.id, row.email, user.role, user.facilityId);
+    const redirect =
+      user.role === 'admin' ? '/admin' : user.role === 'staff' ? '/staff/post' : '/family/feed';
+
+    res.json({
+      success: true,
+      message: `Switched to ${user.role} view`,
+      user,
+      token,
+      redirect,
+    });
+  } catch (err) {
+    console.error('Switch view error:', err);
+    res.status(500).json({ success: false, message: 'Could not switch view — please try again' });
+  }
 });
 
 // ——— Staff: post update ———
@@ -636,6 +715,7 @@ async function ensureDemoData() {
   }
   const { seedFamilyExtras } = require('./seedExtras');
   seedFamilyExtras({ quiet: true });
+  ensureDemoSuperuser();
 }
 
 function registerApiRoutes() {

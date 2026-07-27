@@ -9,6 +9,7 @@ import StaffPost from './pages/StaffPost';
 import FamilyFeed from './pages/FamilyFeed';
 import AdminPanel from './pages/AdminPanel';
 import InstallPrompt from './components/InstallPrompt';
+import DemoViewSwitcher from './components/DemoViewSwitcher';
 
 const STORAGE_KEY = 'kinness_session';
 
@@ -108,34 +109,39 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/staff/post"
-        element={
-          <ProtectedRoute session={session} allowedRole="staff">
-            <StaffPost user={user} token={token} onLogout={handleLogout} />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/family/feed"
-        element={
-          <ProtectedRoute session={session} allowedRole="family">
-            <FamilyFeed user={user} token={token} onLogout={handleLogout} />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute session={session} allowedRole="admin">
-            <AdminPanel user={user} token={token} onLogout={handleLogout} />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/login" element={<Navigate to={roleHome(user.role)} replace />} />
-      <Route path="*" element={<Navigate to={roleHome(user.role)} replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route
+          path="/staff/post"
+          element={
+            <ProtectedRoute session={session} allowedRole="staff">
+              <StaffPost user={user} token={token} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/family/feed"
+          element={
+            <ProtectedRoute session={session} allowedRole="family">
+              <FamilyFeed user={user} token={token} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute session={session} allowedRole="admin">
+              <AdminPanel user={user} token={token} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/login" element={<Navigate to={roleHome(user.role)} replace />} />
+        <Route path="*" element={<Navigate to={roleHome(user.role)} replace />} />
+      </Routes>
+      {user?.isDemo ? (
+        <DemoViewSwitcher currentRole={user.role} token={token} onSwitch={handleAuth} />
+      ) : null}
+    </>
   );
 }
 

@@ -23,11 +23,14 @@ npm run seed:reset    # clears DB and loads full demo dataset
 
 | Role | Email | Password |
 |------|-------|----------|
+| **Demo (toggle views)** | demo@sunrisegardens.com | Demo1234! |
 | Admin | admin@sunrisegardens.com | Admin1234! |
 | Staff | sarah@sunrisegardens.com, david@sunrisegardens.com, aisha@sunrisegardens.com | Staff1234! |
 | Family | jenny.haro@gmail.com (+ 7 others in `seed.js`) | Family1234! |
 
 Facility code: **SGSL2024** — 8 residents, 20 updates over the last 7 days.
+
+Sign in as **demo@sunrisegardens.com** to use the floating **Demo view** switcher (Admin · Staff · Family) without logging out. Family view is linked to Rosa Haro.
 
 ## Quick start
 

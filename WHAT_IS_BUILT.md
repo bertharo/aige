@@ -85,13 +85,14 @@ cd backend && npm run seed:reset    # wipe + reload
 
 | Role | Email | Password |
 |------|-------|----------|
+| **Demo (toggle Admin · Staff · Family)** | `demo@sunrisegardens.com` | `Demo1234!` |
 | **Admin** | `admin@sunrisegardens.com` | `Admin1234!` |
 | **Staff** | `sarah@sunrisegardens.com`, `david@sunrisegardens.com`, `aisha@sunrisegardens.com` | `Staff1234!` |
 | **Family** | `jenny.haro@gmail.com` (+ 7 others in `seed.js`) | `Family1234!` |
 
 **Facility code (register):** `SGSL2024`
 
-**Seed includes:** 8 residents, 3 staff, 8 family accounts, 20 feed updates over the last 7 days.
+**Seed includes:** 8 residents, 3 staff, 8 family accounts, 20 feed updates over the last 7 days, plus a **demo superuser** (`is_demo`) that can switch role views via `POST /api/auth/switch-view` without re-login. Family demo view is linked to Rosa Haro.
 
 **Legacy pilot** (only if old DB never migrated): `admin@kinness.app` / `admin12345`, code `KINNESS2024`
 

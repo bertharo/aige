@@ -104,16 +104,18 @@ function getUserByEmail(db, email) {
   return db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email.toLowerCase());
 }
 
-function insertUser(db, { name, email, password }) {
+function insertUser(db, { name, email, password, isDemo = false }) {
   const existing = getUserByEmail(db, email);
-  if (existing) return existing.id;
+  if (existing) {
+    if (isDemo) {
+      db.prepare('UPDATE users SET is_demo = 1 WHERE id = ?').run(existing.id);
+    }
+    return existing.id;
+  }
   const id = randomUUID();
-  db.prepare('INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)').run(
-    id,
-    name,
-    email.toLowerCase(),
-    hashPassword(password)
-  );
+  db.prepare(
+    'INSERT INTO users (id, name, email, password, is_demo) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, name, email.toLowerCase(), hashPassword(password), isDemo ? 1 : 0);
   return id;
 }
 
@@ -139,6 +141,8 @@ async function runSeed({ reset = false, quiet = false } = {}) {
     const existing = db.prepare('SELECT id FROM facilities WHERE upper(facility_code) = upper(?)').get(FACILITY_CODE);
     if (existing) {
       console.log(`Facility ${FACILITY_CODE} already seeded. Run with --reset to replace all data.`);
+      const { ensureDemoSuperuser } = require('./db');
+      ensureDemoSuperuser();
       printSummary();
       return { facilityId: existing.id, facilityCode: FACILITY_CODE };
     }
@@ -226,6 +230,9 @@ async function runSeed({ reset = false, quiet = false } = {}) {
   const { seedFamilyExtras } = require('./seedExtras');
   seedFamilyExtras({ quiet });
 
+  const { ensureDemoSuperuser } = require('./db');
+  ensureDemoSuperuser();
+
   console.log('Seed complete.');
   printSummary();
   return { facilityId, facilityCode: FACILITY_CODE };
@@ -244,6 +251,7 @@ async function main() {
 function printSummary() {
   console.log('');
   console.log('Login credentials:');
+  console.log('  Demo:   demo@sunrisegardens.com / Demo1234!  (toggle admin · staff · family)');
   console.log('  Admin:  admin@sunrisegardens.com / Admin1234!');
   console.log('  Staff:  sarah@sunrisegardens.com / Staff1234!');
   console.log('  Family: jenny.haro@gmail.com / Family1234!');
