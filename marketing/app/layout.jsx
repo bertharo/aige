@@ -1,4 +1,5 @@
 import { Instrument_Serif } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 const instrumentSerif = Instrument_Serif({
@@ -29,7 +30,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={instrumentSerif.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
