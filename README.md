@@ -23,7 +23,7 @@ npm run seed:reset    # clears DB and loads full demo dataset
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Demo (toggle views)** | demo@sunrisegardens.com | Demo1234! |
+| **Demo (toggle views)** | demo@sunrisegardens.com **or** admin@sunrisegardens.com | Demo1234! / Admin1234! |
 | Admin | admin@sunrisegardens.com | Admin1234! |
 | Staff | sarah@sunrisegardens.com, david@sunrisegardens.com, aisha@sunrisegardens.com | Staff1234! |
 | Family | jenny.haro@gmail.com (+ 7 others in `seed.js`) | Family1234! |

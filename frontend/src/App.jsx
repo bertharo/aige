@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import LanguagePicker from './components/LanguagePicker';
@@ -10,6 +10,7 @@ import FamilyFeed from './pages/FamilyFeed';
 import AdminPanel from './pages/AdminPanel';
 import InstallPrompt from './components/InstallPrompt';
 import DemoViewSwitcher from './components/DemoViewSwitcher';
+import { apiFetch } from './api/client';
 
 const STORAGE_KEY = 'kinness_session';
 
@@ -63,6 +64,30 @@ function AppRoutes() {
     navigate('/login', { replace: true });
   }, [navigate]);
 
+  // Refresh profile so isDemo / role stay current after deploys (old sessions lack isDemo)
+  useEffect(() => {
+    const token = session?.token;
+    if (!token) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await apiFetch('/api/user/profile', { token });
+        if (cancelled || !data?.user) return;
+        setSession((prev) => {
+          if (!prev?.token) return prev;
+          const next = { ...prev, user: { ...prev.user, ...data.user } };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          return next;
+        });
+      } catch {
+        /* keep existing session */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.token]);
+
   const user = session?.user;
   const token = session?.token;
 
@@ -110,6 +135,9 @@ function AppRoutes() {
 
   return (
     <>
+      {user?.isDemo ? (
+        <DemoViewSwitcher currentRole={user.role} token={token} onSwitch={handleAuth} />
+      ) : null}
       <Routes>
         <Route
           path="/staff/post"
@@ -138,9 +166,6 @@ function AppRoutes() {
         <Route path="/login" element={<Navigate to={roleHome(user.role)} replace />} />
         <Route path="*" element={<Navigate to={roleHome(user.role)} replace />} />
       </Routes>
-      {user?.isDemo ? (
-        <DemoViewSwitcher currentRole={user.role} token={token} onSwitch={handleAuth} />
-      ) : null}
     </>
   );
 }

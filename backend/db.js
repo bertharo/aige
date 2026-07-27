@@ -225,7 +225,9 @@ function migrateSchema() {
   }
 }
 
-/** Demo superuser that can toggle admin / staff / family views (Sunrise Gardens). */
+const DEMO_SUPERUSER_EMAILS = ['demo@sunrisegardens.com', 'admin@sunrisegardens.com'];
+
+/** Demo accounts that can toggle admin / staff / family views (Sunrise Gardens). */
 function ensureDemoSuperuser() {
   const facility = db
     .prepare(`SELECT id FROM facilities WHERE upper(facility_code) = upper(?)`)
@@ -233,26 +235,33 @@ function ensureDemoSuperuser() {
   if (!facility) return;
 
   const bcrypt = require('bcryptjs');
-  const email = 'demo@sunrisegardens.com';
-  let user = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
 
-  if (!user) {
+  // Dedicated demo account (created if missing)
+  let demoUser = db
+    .prepare('SELECT id FROM users WHERE lower(email) = ?')
+    .get('demo@sunrisegardens.com');
+  if (!demoUser) {
     const id = randomUUID();
     db.prepare(
       'INSERT INTO users (id, name, email, password, is_demo) VALUES (?, ?, ?, ?, 1)'
-    ).run(id, 'Demo Superuser', email, bcrypt.hashSync('Demo1234!', 12));
-    user = { id };
-  } else {
-    db.prepare('UPDATE users SET is_demo = 1 WHERE id = ?').run(user.id);
+    ).run(id, 'Demo Superuser', 'demo@sunrisegardens.com', bcrypt.hashSync('Demo1234!', 12));
+    demoUser = { id };
+    const roleRow = db
+      .prepare('SELECT id FROM user_roles WHERE user_id = ? AND facility_id = ?')
+      .get(id, facility.id);
+    if (!roleRow) {
+      db.prepare(
+        'INSERT INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)'
+      ).run(randomUUID(), id, 'admin', facility.id);
+    }
   }
 
-  const roleRow = db
-    .prepare('SELECT id FROM user_roles WHERE user_id = ? AND facility_id = ?')
-    .get(user.id, facility.id);
-  if (!roleRow) {
-    db.prepare(
-      'INSERT INTO user_roles (id, user_id, role, facility_id) VALUES (?, ?, ?, ?)'
-    ).run(randomUUID(), user.id, 'admin', facility.id);
+  // Flag all demo-capable emails (incl. the usual Sunrise admin people already use)
+  for (const email of DEMO_SUPERUSER_EMAILS) {
+    const row = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
+    if (row) {
+      db.prepare('UPDATE users SET is_demo = 1 WHERE id = ?').run(row.id);
+    }
   }
 
   const rosa = db
@@ -260,15 +269,20 @@ function ensureDemoSuperuser() {
       `SELECT id FROM residents WHERE facility_id = ? AND first_name = ? AND last_name = ?`
     )
     .get(facility.id, 'Rosa', 'Haro');
-  if (rosa) {
+  if (!rosa) return;
+
+  // Link every demo-capable user to Rosa so family view has feed data
+  for (const email of DEMO_SUPERUSER_EMAILS) {
+    const row = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(email);
+    if (!row) continue;
     const link = db
       .prepare('SELECT id FROM family_members WHERE user_id = ? AND resident_id = ?')
-      .get(user.id, rosa.id);
+      .get(row.id, rosa.id);
     if (!link) {
       db.prepare(`
         INSERT INTO family_members (id, user_id, resident_id, relationship, preferred_language)
         VALUES (?, ?, ?, ?, ?)
-      `).run(randomUUID(), user.id, rosa.id, 'Demo Viewer', 'en');
+      `).run(randomUUID(), row.id, rosa.id, 'Demo Viewer', 'en');
     }
   }
 }
